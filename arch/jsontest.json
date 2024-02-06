@@ -1,0 +1,161 @@
+
+
+/****
+ * 4.1 单个指令下发【命令下发1个数据对象，用户操作APP时下发该指令。】
+ * WiFi req: putChar,37,{"switch":{"on":40,"target":65}}\n
+ *
+ * 批量指令下发【MCU 端可以通过JSON 对象中的字段是否含有”batch”来区分是单指令还是多指令】
+ * WiFi req:
+ * putChar,124,{"batch":[{"sid":"switch","data":{"on":1}},{"sid":"brightness","data":{"value":100}},{"sid":"colour","data":{"white":100}}]}\n
+ ****/
+
+/****
+ * 4.2 MCU状态上报【设备自身属性状态发生变化时主动上报。如果是操作APP导致的属性变化，不需要使用此接口上报。】
+ * MCU req: reportChar,37,{"opener":{"current":40,"target":65}}\n
+ ****/
+
+
+/****
+ * 5.1 查询设备配置
+ * Wi-Fi req: getDevInfo,0\n
+ * MCU ack:getDevInfo,432,{。。。｝\n
+ * Wi-Fi ack: getDevInfo,2,ok\n 或者 Wi-Fi ack: getDevInfo,5,error\n
+ ****/
+
+/**
+ * 5.2 上报设备服务属性
+ * MCU在收到getDevInfo,2,ok 确认的消息后主动上报全部属性信息。
+ * MCU send:reportService,109,{"sId":["switch","fan","childLockSwitch","filterElement1"],"sType":["switch","fan","switch","filterElement"]}\n
+ * Wifi ack: reportService,2,ok\n
+ */
+ 
+/**
+ * 5.3 查单个服务属性
+ * WiFi req: getChar,6,switch\n
+ * MCU ack: getChar,19,{"switch":{"on":1}}\n
+ **/
+ 
+/**
+ * 5.4 下发心跳信号
+ * WiFi req: heartbeat,0\n
+ * MCU ack: heartbeat,0\n
+ **/
+
+/**************************************************************************/
+
+/** MCU ==> WIFI **/
+getDevInfo,xxx,
+{
+    "v": "1.0.1",
+    "dv": "1.0.0",
+    "prodId": "DM6",
+    "deviceTypeId": "mop",
+    "manufacturerId": "DIISEA",
+    "deviceModel": "DM6",
+    "deviceTypeNameEn": "mop",
+    "manufacturerNameEn": "DIISEA",
+    "networkType": "AP",
+    "acKey": "702B20206F2468203956502B3A6A673A734AE2CC6BE3B7A4CDD9BA27DD889661DB9D818EED21F46CD159B2AAAAAC16C8",
+    "productSeries": "DM6",
+    "productKey": "f2b80c7c77b840e4b7017029baab9bf6",
+    "marketName": "多功能水尘洗地机",
+    "brand": "DIISEA"
+}
+
+getDevInfo,xxx,
+{
+    "v": "1.0.1",
+    "dv": "1.0.0",
+    "prodId": "DM6",
+    "deviceTypeId": "01D",
+    "manufacturerId": "416",
+    "deviceModel": "OHOS002",
+    "deviceTypeNameEn": "mop",
+    "manufacturerNameEn": "DIISEA",
+    "networkType": "BLE",
+    "acKey": "702B20206F2468203956502B3A6A673A734AE2CC6BE3B7A4CDD9BA27DD889661DB9D818EED21F46CD159B2AAAAAC16C8",
+    "productSeries": "DM6",
+    "productKey": "f2b80c7c77b840e4b7017029baab9bf6",
+    "marketName": "多功能水尘洗地机",
+    "brand": "DIISEA"
+}
+
+getDevInfo,xxx,
+{
+    "v": "1.0.1",
+    "dv": "1.0.0",
+    "prodId": "DM6",
+    "deviceTypeId": "01D",
+    "manufacturerId": "416",
+    "deviceModel": "OHOS002",
+    "deviceTypeNameEn": "mop",
+    "manufacturerNameEn": "DIISEA",
+    "networkType": "BLE",
+    "near": {
+        "type": 1,
+        "trp": -8
+    },
+    "acKey": "702B20206F2468203956502B3A6A673A734AE2CC6BE3B7A4CDD9BA27DD889661DB9D818EED21F46CD159B2AAAAAC16C8",
+    "productSeries": "DM6",
+    "productKey": "f2b80c7c77b840e4b7017029baab9bf6",
+    "marketName": "多功能水尘洗地机",
+    "brand": "DIISEA"
+}
+
+/****
+ * 4.1 单个指令下发【命令下发1个数据对象，用户操作APP时下发该指令。】
+ * WiFi req: putChar,37,{"switch":{"on":40,"target":65}}\n
+ */
+{
+    "switch": {
+        "on": 40,
+        "target": 65
+    }
+}
+
+/** 
+ * 4.1 批量指令下发【MCU 端可以通过JSON 对象中的字段是否含有”batch”来区分是单指令还是多指令】 
+ **/
+{
+    "batch": [
+        {
+            "sid": "switch",
+            "data": {
+                "on": 1
+            }
+        },
+        {
+            "sid": "brightness",
+            "data": {
+                "value": 100
+            }
+        },
+        {
+            "sid": "colour",
+            "data": {
+                "white": 100
+            }
+        }
+    ]
+}
+
+/**
+ * 5.2 MCU ==> WIFI 
+ * 上报服务属性，用到此报文body
+ **/
+{
+    "sId": [
+        "master",
+        "mop",
+        "childLockSwitch",
+        "filterElement1"
+    ],
+    "sType": [
+        "master",
+        "mop",
+        "switch",
+        "filterElement"
+    ]
+}
+
+
