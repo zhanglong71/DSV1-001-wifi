@@ -126,17 +126,17 @@ int reportBatteryLevel(u8 arg)
 #if 1
 const static u8* statusBodyArr[] = {
 #define CINDEX_CHARGING (0)
-    "{\"mop\":{\"status\":\"charging\"}}",
+    "{\"mop\":{\"charge\":\"charging\"}}",
 #define CINDEX_CHARGECOMPLETE (1)
-    "{\"mop\":{\"status\":\"chargeComplete\"}}",
+    "{\"mop\":{\"charge\":\"chargeComplete\"}}",
 #define CINDEX_CHARGEFAULT (2)
-    "{\"mop\":{\"status\":\"chargeFault\"}}",
+    "{\"mop\":{\"charge\":\"chargeFault\"}}",
 #define CINDEX_LOWBATTERY (3)
-    "{\"mop\":{\"status\":\"lowBattery\"}}",
+    "{\"mop\":{\"battery\":\"lowBattery\"}}",
 #define CINDEX_DORMANCY (4)
     "{\"mop\":{\"status\":\"dormancy\"}}",
 #define CINDEX_SCREENSHUTDOWN (5)
-    "{\"mop\":{\"status\":\"ScreenShutdown\"}}",
+    "{\"mop\":{\"screen\":\"ScreenShutdown\"}}",
 #define CINDEX_STANDBY (6)
     "{\"mop\":{\"status\":\"standby\"}}",
 #define CINDEX_NEUTRAL (7)
@@ -159,19 +159,19 @@ const static u8* statusBodyArr[] = {
 #define CINDEX_FLUSHING (15)
     "{\"mop\":{\"status\":\"flushing\"}}",                   // 大水冲洗模式
 #define CINDEX_TANKINPLACE (16)
-    "{\"mop\":{\"status\":\"tankInPlace\"}}",                // 水箱在位识别
+    "{\"mop\":{\"tank\":\"tankInPlace\"}}",                // 水箱在位识别
 #define CINDEX_TANKNOTINPLACE (17)
-    "{\"mop\":{\"status\":\"tankNotInPlace\"}}",           // 水箱不在位识别
+    "{\"mop\":{\"tank\":\"tankNotInPlace\"}}",           // 水箱不在位识别
 #define CINDEX_FULLSEWAGE (18)
-    "{\"mop\":{\"status\":\"fullSewage\"}}",                // 污水满
+    "{\"mop\":{\"sewage\":\"fullSewage\"}}",                // 污水满
 #define CINDEX_INSUFFICIENTWATER (19)
-    "{\"mop\":{\"status\":\"InsufficientWater\"}}",         // 没有清水
+    "{\"mop\":{\"clear\":\"InsufficientWater\"}}",         // 没有清水
 #define CINDEX_PUMPOVERLOAD (20)
-    "{\"mop\":{\"status\":\"pumpOverLoad\"}}",            // 水泵过载     pumpOverload
+    "{\"mop\":{\"pump\":\"pumpOverLoad\"}}",            // 水泵过载     pumpOverload
 #define CINDEX_PUMPCURRENTSMALL (21)
-    "{\"mop\":{\"status\":\"pumpCurrentSmall\"}}",            // 水泵电流过小 pumpCurrentToosmall
+    "{\"mop\":{\"pump\":\"pumpCurrentSmall\"}}",            // 水泵电流过小 pumpCurrentToosmall
 #define CINDEX_MOTOROVERLOAD (22)
-    "{\"mop\":{\"status\":\"motorOverLoad\"}}",                 // 电机故障
+    "{\"mop\":{\"moto\":\"motorError\"}}",                 // 电机故障
 #define CINDEX_INVALID (0xff)
     ""
 };
@@ -216,13 +216,16 @@ jsonTL_t* getGetCharCmdbyMode(u8 mode)
 int reportGetCharCmd(unsigned *arg)
 {
     (void)arg;
-    jsonTL_t* p = getGetCharCmdbyMode(1);  //????????????????????????????
-    //jsonTL_t* p = getGetCharCmdbyMode(sysvar.Modes);
+    // jsonTL_t* p = getGetCharCmdbyMode(1);  //????????????????????????????
+    jsonTL_t* p = getGetCharCmdbyMode(sysvar.Modes);
     sm_sendData(p);
     return 0;
 }
 
-/** 上报命令 **/
+/**
+ * ?ϱ????? 
+ * ?????? getChar/reportChar
+ **/
 #if 1
 jsonTL_t* getReportCmdbyMode(u8 mode)
 {
@@ -239,7 +242,30 @@ jsonTL_t* getReportCmdbyMode(u8 mode)
 	return (&jsonTypeTx);
 }
 #endif
+/*********************************************************************/
+/**
+ * ????״̬?ϱ?
+ **/
+int reportMotoStatus(unsigned *arg)
+{
 
+}
+
+/**
+ * ˮ??״̬?ϱ?
+ **/
+int reportPumpStatus(unsigned *arg)
+{
+}
+
+/**
+ * ????״̬?ϱ?
+ **/
+int reportChargeStatus(unsigned *arg)
+{
+}
+
+/*********************************************************************/
 jsonTL_t* getDevInfo(u8 idx)
 {
     static jsonTL_t jsonTypeDevInfo[] = {
