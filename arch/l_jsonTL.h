@@ -24,6 +24,7 @@ int reportResetNet(u8 arg);
 int reportScanWifi(void *arg);
 int reportConnectWifi(void *arg);
 int reportBatteryLevel(u8 arg);
+int reportComponentStatus(u8 statusIndex);
 
 // void reportTest(void);
 

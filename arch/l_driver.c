@@ -8,6 +8,7 @@
 
 #include "main.h"
 #include "l_driver.h"
+#include "l_jsonTL.h"
 
 int sysProcess(unsigned *pMsg)
 {
@@ -218,13 +219,6 @@ void DAEMON_USART3_Send(u8FIFO_t* queue)
     }  
 }
 
-#if 0
-void wifi_Send_data(const u8 Data){
-	while(USART_GetFlagStatus(USART3, USART_FLAG_TC) == RESET);
-	USART3->DATAR = (Data);
-}
-#endif
-
 /** nothing to do with old key_scan **/
 void key_scan4setwifi(void)
 {
@@ -293,4 +287,120 @@ void key_scan4setwifi(void)
 #endif
 #endif
 }
+
+void checkWorkMode(void)
+{
+    u8 static mode_last = 0;
+    if(sysvar.sysfang & OFF_ON) {
+        if (mode_last != sysvar.Modes) {
+            mode_last = sysvar.Modes;
+            
+        }
+    } else {
+        mode_last = 0;
+    }
+    
+
+    
+}
+
+void checkMotoStatus(void)
+{
+    u8 static moto_status_last = 0;
+    u8 moto_status = 0;
+    
+    if (sysvar.sysfang & MOTO_ERR_1) {
+        moto_status = CINDEX_MOTOROVERLOAD;
+    } else {  // normal
+        moto_status = 0;
+    }
+    if (moto_status_last != moto_status) {
+        moto_status_last = moto_status;
+        /** report **/
+        (void)reportComponentStatus(moto_status);
+    }
+}
+
+/** pump overload/ **/
+void checkPumpStatus(void)
+{
+    u8 static pump_status_last = 0;
+    u8 pump_status = 0;
+
+    if (IdSensor_fang(IdSensor_PUMP)) { // no pump
+        pump_status = CINDEX_PUMPCURRENTSMALL;
+    } else if (IdSensor_fang(IdSensor_PUMPERR) || (sysvar.sysfang & MOTO_ERR_2)) { // pump error
+        pump_status = CINDEX_PUMPOVERLOAD;
+    } else {  // normal
+        pump_status = 0;
+    }
+
+    if (pump_status_last != pump_status) {
+        pump_status_last = pump_status;
+        /** report **/
+        (void)reportComponentStatus(pump_status);
+    }
+}
+
+void checkBatteryStatus(void)
+{
+    u8 static battery_status_last = 0;
+    u8 battery_status = 0;
+    
+    if(sysvar.batfang & (BACH_low|BACH_lowin|BACH_lowin2)) {  // 
+        battery_status = CINDEX_LOWBATTERY;
+    } else {  // normal
+        battery_status = 0;
+    }
+    
+    if (battery_status_last != battery_status) {
+        battery_status_last = battery_status;
+        /** report **/
+        (void)reportComponentStatus(battery_status);
+    }
+}
+
+void checkChargeStatus(void)
+{
+    u8 static charge_status_last = 0;
+    u8 charge_status = 0;
+
+    if(sysvar.batfang & (BATCHining)) {    // 
+        charge_status = CINDEX_CHARGING;
+    } else if (sysvar.batfang &	BACHready) {
+        charge_status = CINDEX_CHARGECOMPLETE;
+    } else {
+        charge_status = 0;
+    }
+
+    if (charge_status_last != charge_status) {
+        charge_status_last = charge_status;
+        /** report **/
+        (void)reportComponentStatus(charge_status);
+    }
+}
+
+void checkClearWaterStatus(void)
+{
+    u8 static clear_status_last = 0;
+    u8 clear_status = 0;
+    
+    if(IdSensor_fang(IdSensor_CLEAR)) {    //
+        clear_status = IdSensor_CLEAR;
+    } else {
+        clear_status = 0;
+    }
+
+    if (clear_status_last != clear_status) {
+        clear_status_last = clear_status;
+        /** report **/
+        (void)reportComponentStatus(clear_status);
+    }
+}
+
+void checkAndReportComponentStatus(void)
+{
+    
+}
+
 

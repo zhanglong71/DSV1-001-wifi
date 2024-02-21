@@ -132,25 +132,51 @@ getDevInfo,0,
 
 
 a.机器工作状态判断依据(基本功能)：
-暂以mode_determine()函数中的变化为准：
+暂以mode_determine()函数中的变化为准：或参考 wifi_Upload_STATUS()
   sysvar.Modes
   MODE_1/MODE_2/MODE_3/MODE_RINSE/MODE_CLEANING --- 对应标准模式、强力模式、强力模式、冲洗模式、自清洗模式
+  
+  退出工作时的状态：
+  sysvar.sysfang &= ~OFF_ON; （暂不考虑自清洗模式）
 
-b.电量低判断依据(需求文档，第1、2条)：
-暂以perform()函数中的变化为准：
-    sysvar.batfang & BACH_lowin
+
+b.滚筒故障(设备故障)  参考 wifi_Upload_FAULT() 函数
+  (sysvar.sysfang & MOTO_ERR_1)
+
+c.电池电量低判断依据(需求文档，第1、2条)：
+暂以 perform() 函数中的变化为准：
+    (sysvar.batfang & (BACH_low|BACH_lowin|BACH_lowin2) 
     
-    (BACH_low|BACH_lowin|BACH_lowin2)的关系需要进一步了解：
+    (BACH_low|BACH_lowin|BACH_lowin2)的更多信息，可以从 perform() 函数的最后一段得到：
+    sysvar.batfang & BACH_low --- 对应 sysvar.BAT_soc < 1 (如果是开机状态，还有 BATpowers_ERR)
+    sysvar.batfang & BACH_lowin2 --- 对应 sysvar.BAT_soc < 3
+    sysvar.batfang & BACH_lowin --- 对应 sysvar.BAT_soc < 5
+    
+    
+d.充电状态
+  暂以 CHruning() 函数中的
+   (sysvar.CH_state==CH_DETECTION || sysvar.CH_state==CH_over) --- 充电检测(非充电状态)
+   (sysvar.CH_state==CH_STANDBY) --- 充满(非充电状态)
+   (sysvar.CH_state==CH_ING) --- 充电中()
+   (sysvar.CH_state==CH_ERR) --- 充电故障
+   其中只区分3个状态：非充电状态(充电完成)、充电中，充电故障
+   
+   CH_task2()函数中的 (sysvar.batfang & BATCHining) 还有  (sysvar.batfang & BACH_over) 是干啥的(暂无视之)
+   
+     
+e.清水水位(不足)
+  暂以 mode_determine()函数中的 IdSensor_fang(IdSensor_CLEAR) 为准
+  另外，附加开机并且非大水冲洗模式 (sysvar.sysfang & OFF_ON) && (sysvar.Modes!=MODE_RINSE)
   
-c. 清水水位(不足)
-  暂以 IdSensor_fang(IdSensor_CLEAR) 为准
+  IDs_Judge() 中的判断流程呢 ？
+  (IdSensor_fCmp(IdSensor_CLEAR)) 需要进一步了解：IdSensor_fCmp(IdSensor_CLEAR)用于比较两次检测前后的变化！IdSensor_fang(IdSensor_CLEAR)是当前状态
   
 
-d. 水泵状态(过载、电流小)
-  水泵故障：sysvar.sysfang & MOTO_ERR_2
-  或进一步参考 Rgb_ERRPumpProtect 状态生成的依据
+f.水泵状态(过载、电流小)
+  水泵故障：暂以 (IdSensor_fang(IdSensor_PUMPERR) 或 (IdSensor_fang(IdSensor_PUMP)  条件为准！参考 wifi_Upload_FAULT()
+   从已知逻辑看，(sysvar.sysfang & (OFF_ON)) 这个条件要满足
   
-e.滚筒故障(设备故障)  
-  sysvar.sysfang & MOTO_ERR_1
-
+  moto_run() 函数中的 (sysvar.sysfang & MOTO_ERR_2) 需要进一步了解
+  
 /*********************************************************************************************************************/
+

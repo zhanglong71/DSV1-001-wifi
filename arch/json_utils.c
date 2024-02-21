@@ -415,7 +415,7 @@ unsigned char JsonParseBatch(unsigned char* str, JsonArr* jsonstcarr)
     if(strstr(str, "batch") == NULL) {   /** command **/
         return(0); 
     }
-    if((strchr(str, "[") == NULL)||(strchr(str, "]") == NULL)) {
+    if((strchr(str, '[') == NULL)||(strchr(str, ']') == NULL)) {
         return(0);
     }
     

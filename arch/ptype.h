@@ -153,6 +153,11 @@ typedef struct pair_s {
     void *second;
 }pair_t;
 
+typedef struct pair_u8u8_s {
+   u8 first;
+   u8 second;
+}pair_u8u8_t;
+
 
 #if 0
 typedef struct bitmap_s {
@@ -289,6 +294,19 @@ typedef enum {
     obj_body
 } objType_t;
 
+/*******************************************************************************/
+typedef struct ComponentField_s{
+	u8 moto;
+	u8 pump;
+	u8 battery;
+	u8 charge;
+	u8 clear;
+} ComponentField_t;
+
+typedef struct reportStatusBody_s{
+	u8 index;
+	u8* body;
+} reportStatusBody_t;
 /*******************************************************************************/
 
 #endif /** ifndef end **/

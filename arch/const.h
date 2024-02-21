@@ -47,7 +47,34 @@
 #define TIMER_30SEC (TIMER_10MS * 3000)
 #define TIMER_1MIN (TIMER_10MS * 6000)
 
+/*******************************************************************************/
+#define CINDEX_CHARGING (0)
+#define CINDEX_CHARGECOMPLETE (1)
+#define CINDEX_CHARGEFAULT (2)
+#define CINDEX_LOWBATTERY (3)
+#define CINDEX_DORMANCY (4)
+#define CINDEX_SCREENSHUTDOWN (5)
+#define CINDEX_STANDBY (6)
+#define CINDEX_NEUTRAL (7)
+#define CINDEX_SETUP (8)
+#define CINDEX_SETUP2 (9)
+#define CINDEX_SETUP3 (10)
+    
+#define CINDEX_CONNECTION (11) 
+#define CINDEX_STANDARD (12)  
+#define CINDEX_HIGHPOWER (13)
+#define CINDEX_CLEANING (14)
+#define CINDEX_FLUSHING (15)
+#define CINDEX_RINSE  (15)
 
+#define CINDEX_TANKINPLACE (16)
+#define CINDEX_TANKNOTINPLACE (17)
+#define CINDEX_FULLSEWAGE (18)
+#define CINDEX_INSUFFICIENTWATER (19)
+#define CINDEX_PUMPOVERLOAD (20)
+#define CINDEX_PUMPCURRENTSMALL (21)
+#define CINDEX_MOTOROVERLOAD (22)
+#define CINDEX_INVALID (0xff)
 
 /*******************************************************************************/
 #endif
