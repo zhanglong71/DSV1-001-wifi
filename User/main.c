@@ -124,7 +124,7 @@ int main(void){
     	}
 //  		wifi_uart_service();
 // #else
-
+    checkAndReportComponentStatus();
     DAEMON_USART3_Send(&g_uart3TxQue);
     if(msgq_out_irq(&g_msgq, &msg) == FALSE) {     	/** ����Ϣ��? **/
         continue;

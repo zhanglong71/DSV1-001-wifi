@@ -103,7 +103,7 @@ int reportBatteryLevel(u8 arg)
     u8FIFOin_irq(&g_uart3TxQue, &u8Data); 
     
     /** lllllllll length **/
-    sprintf(buf, "{\"mop\":{\"BatteryLevel\":\"%u\"}}",  arg);
+    sprintf(buf, "{\"battery\":{\"level\":\"%u\"}}",  arg);
     len = strlen(buf);
     if (sprintf(buf, "%d", len)) {
         for (int i = 0; i < strlen(buf); i++) {
@@ -115,7 +115,7 @@ int reportBatteryLevel(u8 arg)
     u8FIFOin_irq(&g_uart3TxQue, &u8Data);
     
     /** bbbbbbbbb body **/
-    sprintf(buf, "{\"mop\":{\"BatteryLevel\":\"%u\"}}",  arg);
+    sprintf(buf, "{\"battery\":{\"level\":\"%u\"}}",  arg);
     for (int i = 0; i < strlen(buf); i++) {
         u8Data.u8Val = buf[i];
         u8FIFOin_irq(&g_uart3TxQue, &u8Data);
@@ -123,15 +123,15 @@ int reportBatteryLevel(u8 arg)
     return (TRUE);
 }
 
-#if 1
 const static reportStatusBody_t reportStatusBodyArr[] = {
+    #if 0
     { CINDEX_CHARGING,           "{\"mop\":{\"charge\":\"charging\"}}"},         // 正在充电
     { CINDEX_CHARGECOMPLETE,     "{\"mop\":{\"charge\":\"chargeComplete\"}}"},   // 充电完成
     { CINDEX_CHARGEFAULT,        "{\"mop\":{\"charge\":\"chargeFault\"}}"},      // 充电故障
     { CINDEX_LOWBATTERY,         "{\"mop\":{\"battery\":\"lowBattery\"}}"},      // 电池电压低
     { CINDEX_DORMANCY,           "{\"mop\":{\"status\":\"dormancy\"}}"},         // 休眠状态
     { CINDEX_SCREENSHUTDOWN,     "{\"mop\":{\"screen\":\"ScreenShutdown\"}}"},   // 熄屏
-    { CINDEX_STANDBY,            "{\"mop\":{\"status\":\"standby\"}}"},                 // 熄屏
+    { CINDEX_STANDBY,            "{\"mop\":{\"status\":\"standby\"}}"},                 // 待机
     { CINDEX_NEUTRAL,            "{\"mop\":{\"status\":\"neutral\"}}"},                 // 空档模式
     { CINDEX_SETUP,              "{\"mop\":{\"status\":\"setup\"}}"},                   // 设置模式 setup mode
     { CINDEX_SETUP2,             "{\"mop\":{\"status\":\"setup\"}}"},                   // 设置语音 setup voice prompt
@@ -148,14 +148,39 @@ const static reportStatusBody_t reportStatusBodyArr[] = {
     { CINDEX_INSUFFICIENTWATER,  "{\"mop\":{\"clear\":\"InsufficientWater\"}}"},        // 没有清水
     { CINDEX_PUMPOVERLOAD,       "{\"mop\":{\"pump\":\"pumpOverLoad\"}}"},              // 水泵过载     pumpOverload
     { CINDEX_PUMPCURRENTSMALL,   "{\"mop\":{\"pump\":\"pumpCurrentSmall\"}}"},          // 水泵电流过小 pumpCurrentToosmall
-    { CINDEX_MOTOROVERLOAD,      "{\"mop\":{\"moto\":\"motorError\"}}"},                // 电机故障
-    { CINDEX_INVALID, ""}
+    { CINDEX_MOTOROVERLOAD,      "{\"mop\":{\"roller\":\"rollerError\"}}"},                // 电机故障
+    #else
+    { CINDEX_UNKNOW,              "{\"mop\":{\"status\":0}}"},             // unknow 未知状态(主机断开及其它)
+    { CINDEX_STANDBY,             "{\"mop\":{\"status\":1}}"},             // standby 待机
+    { CINDEX_STANDARD,            "{\"mop\":{\"status\":2}}"},                   // standard 标准模式
+    { CINDEX_HIGHPOWER,           "{\"mop\":{\"status\":3}}"},                   // highPower强力模式
+    { CINDEX_RINSE,               "{\"mop\":{\"status\":4}}"},                   // rinse 大水冲洗模式
+    { CINDEX_CLEANING,            "{\"mop\":{\"status\":5}}"},                   // cleaning 自清洗模式
+    
+    { CINDEX_ROLLERNORMAL,        "{\"roller\":{\"status\":1}}"},                // normal 滚筒电机正常
+    { CINDEX_ROLLEROVERLOAD,      "{\"roller\":{\"status\":2}}"},                // error 滚筒电机故障
+    
+    { CINDEX_CLEARWATERNORMAL,    "{\"clearWater\":{\"status\":1}}"},             // clear water normal 清水正常
+    { CINDEX_CLEARWATERSHORTAGE,  "{\"clearWater\":{\"status\":2}}"},             // clear water shortage 清水不足
+    
+    { CINDEX_PUMPNORMAL,          "{\"pump\":{\"status\":1}}"},                  // 水泵正常     pumpNormal
+    { CINDEX_PUMPOVERLOAD,        "{\"pump\":{\"status\":2}}"},                  // 水泵过载     pumpOverload
+    { CINDEX_PUMPCURRENTSMALL,    "{\"pump\":{\"status\":3}}"},                  // 水泵电流过小 pumpCurrentTooSmall
+    
+    { CINDEX_BATTERYNORMAL,       "{\"battery\":{\"status\":1}}"},      // 电池电压在正常范围
+    { CINDEX_BATTERYLOW,          "{\"battery\":{\"status\":2}}"},      // 电池电压过低
+    
+    { CINDEX_UNCHARGED,           "{\"charge\":{\"status\":1}}"},         // 没充电
+    { CINDEX_CHARGING,            "{\"charge\":{\"status\":2}}"},         // 正在充电
+    { CINDEX_CHARGECOMPLETE,      "{\"charge\":{\"status\":3}}"},         // 充电完成(区别不充电场景)
+    { CINDEX_CHARGEFAULT,         "{\"charge\":{\"status\":4}}"},         // 充电故障
+    #endif
 };
 
 static u8 getIdxbyMode(u8 mode)
 {
     const static pair_u8u8_t statusNum2IdxArr[] = {
-        {0, CINDEX_STANDBY},
+        {0, CINDEX_UNKNOW},
         {MODE_1, CINDEX_STANDARD},
         {MODE_2, CINDEX_HIGHPOWER},
         {MODE_3, CINDEX_HIGHPOWER},
@@ -164,13 +189,12 @@ static u8 getIdxbyMode(u8 mode)
     };
 
     for (int i = 0; i < MTABSIZE(statusNum2IdxArr); i++) {
-        if ((u8)(statusNum2IdxArr[i].first) == mode) {
-            return (u8)statusNum2IdxArr[i].second;
+        if ((statusNum2IdxArr[i].first) == mode) {
+            return statusNum2IdxArr[i].second;
         }
     }
     return CINDEX_INVALID;
 }
-#endif
 
 /**
  * response getChar
@@ -193,9 +217,8 @@ jsonTL_t* getGetCharCmdbyMode(u8 mode)
 }
 
 /** the current work status **/
-int reportGetCharCmd(unsigned *arg)
+int reportGetCharCmd(void)
 {
-    (void)arg;
     jsonTL_t* p = getGetCharCmdbyMode(sysvar.Modes);
     sm_sendData(p);
     return 0;
@@ -209,7 +232,15 @@ int reportGetCharCmd(unsigned *arg)
 jsonTL_t* getReportCmdbyMode(u8 mode)
 {
     static jsonTL_t jsonTypeTx;
-    u8 idx = getIdxbyMode(mode); 
+    u8 statusIndex = getIdxbyMode(mode); 
+    u8 idx = 0;
+    
+    for (idx = 0; idx < MTABSIZE(reportStatusBodyArr); idx++) {
+        if (reportStatusBodyArr[idx].index == statusIndex) {
+            break;
+        }
+    }
+    
     if (idx >= MTABSIZE(reportStatusBodyArr)) {
         return (NULL);
     }
@@ -220,6 +251,14 @@ jsonTL_t* getReportCmdbyMode(u8 mode)
     
 	return (&jsonTypeTx);
 }
+
+int reportReportCharCmd(void)
+{
+    jsonTL_t* p = getReportCmdbyMode(sysvar.Modes);
+    sm_sendData(p);
+    return 0;
+}
+
 #endif
 /***********************************************************************
  * moto/pump/battery/clear/charge
@@ -227,11 +266,18 @@ jsonTL_t* getReportCmdbyMode(u8 mode)
 int reportComponentStatus(u8 statusIndex)
 {
     static jsonTL_t jsonTypeTx;
+    u8 idx = 0;
 
-    if (statusIndex >= MTABSIZE(reportStatusBodyArr)) {
+    for (idx = 0; idx < MTABSIZE(reportStatusBodyArr); idx++) {
+        if (reportStatusBodyArr[idx].index == statusIndex) {
+            break;
+        }
+    }
+
+    if (idx >= MTABSIZE(reportStatusBodyArr)) {
         return 0;
     }
-    
+
     jsonTypeTx.jHead = "reportChar";
     jsonTypeTx.jBody = reportStatusBodyArr[statusIndex].body;
     jsonTypeTx.jLen = strlen(jsonTypeTx.jBody);
@@ -317,18 +363,20 @@ jsonTL_t* getService(u8 idx)
             "reportService", 0,
             "{"
                 "\"sId\": ["
-                    "\"master\","
                     "\"mop\","
-                    "\"sparyer\","
-                    "\"aspirator\","
-                    "\"brush\""
+                    "\"roller\","
+                    "\"clearWater\","
+                    "\"pump\","
+                    "\"battery\","
+                    "\"charge\""
                     "],"
                 "\"sType\": ["
-                    "\"master\","
                     "\"mop\","
-                    "\"sparyer\","
-                    "\"aspirator\","
-                    "\"brush\""
+                    "\"roller\","
+                    "\"clearWater\","
+                    "\"pump\","
+                    "\"battery\","
+                    "\"charge\""
                 "]"
             "}"
         }   

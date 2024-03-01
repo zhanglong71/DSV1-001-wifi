@@ -47,7 +47,7 @@ int sysProcess(unsigned *pMsg)
         break;
 
     case CGET_CHAR:
-        (void)reportGetCharCmd(NULL);
+        (void)reportGetCharCmd();
         break;
 		
     case CPUT_CHAR:
@@ -288,41 +288,58 @@ void key_scan4setwifi(void)
 #endif
 }
 
-void checkWorkMode(void)
+void checkAndReportWorkMode(void)
 {
     u8 static mode_last = 0;
+    u8 mode = 0;
+    u8 index = 0;
+
+    mode = sysvar.Modes;
+    /** mechine disconnected **/
+    if (IDs_.Equipment != f_DragLala) {
+        if (mode_last != mode) {
+            mode_last = mode;
+            index = CINDEX_UNKNOW;
+            (void)reportComponentStatus(index);
+        }
+        return;
+    }
+
+    /** runing or stoped **/
     if(sysvar.sysfang & OFF_ON) {
-        if (mode_last != sysvar.Modes) {
-            mode_last = sysvar.Modes;
-            
+        if (mode_last != mode) {
+            mode_last = mode;
+            (void)reportReportCharCmd();
         }
     } else {
-        mode_last = 0;
+        if (mode_last != mode) {
+            mode_last = mode;
+            index = CINDEX_STANDBY;
+            (void)reportComponentStatus(index);
+        }
     }
-    
-
-    
 }
 
-void checkMotoStatus(void)
+void checkAndReportRollerStatus(void)
 {
-    u8 static moto_status_last = 0;
-    u8 moto_status = 0;
+    u8 static roller_status_last = 0;
+    u8 roller_status = 0;
     
     if (sysvar.sysfang & MOTO_ERR_1) {
-        moto_status = CINDEX_MOTOROVERLOAD;
+        roller_status = CINDEX_ROLLEROVERLOAD;
     } else {  // normal
-        moto_status = 0;
+        roller_status = CINDEX_ROLLERNORMAL;
     }
-    if (moto_status_last != moto_status) {
-        moto_status_last = moto_status;
+    
+    if (roller_status_last != roller_status) {
+        roller_status_last = roller_status;
         /** report **/
-        (void)reportComponentStatus(moto_status);
+        (void)reportComponentStatus(roller_status);
     }
 }
 
 /** pump overload/ **/
-void checkPumpStatus(void)
+void checkAndReportPumpStatus(void)
 {
     u8 static pump_status_last = 0;
     u8 pump_status = 0;
@@ -332,7 +349,7 @@ void checkPumpStatus(void)
     } else if (IdSensor_fang(IdSensor_PUMPERR) || (sysvar.sysfang & MOTO_ERR_2)) { // pump error
         pump_status = CINDEX_PUMPOVERLOAD;
     } else {  // normal
-        pump_status = 0;
+        pump_status = CINDEX_PUMPNORMAL;
     }
 
     if (pump_status_last != pump_status) {
@@ -342,15 +359,15 @@ void checkPumpStatus(void)
     }
 }
 
-void checkBatteryStatus(void)
+void checkAndReportBatteryStatus(void)
 {
     u8 static battery_status_last = 0;
     u8 battery_status = 0;
     
     if(sysvar.batfang & (BACH_low|BACH_lowin|BACH_lowin2)) {  // 
-        battery_status = CINDEX_LOWBATTERY;
+        battery_status = CINDEX_BATTERYLOW;
     } else {  // normal
-        battery_status = 0;
+        battery_status = CINDEX_BATTERYNORMAL;
     }
     
     if (battery_status_last != battery_status) {
@@ -360,17 +377,26 @@ void checkBatteryStatus(void)
     }
 }
 
-void checkChargeStatus(void)
+void checkAndReportChargeStatus(void)
 {
     u8 static charge_status_last = 0;
     u8 charge_status = 0;
 
-    if(sysvar.batfang & (BATCHining)) {    // 
+/**
+ * note: this MACRO define must same as the CHARGING.c 
+ **/
+#define CH_ING					2
+#define CH_over					3
+#define CH_ERR					5
+
+    if (sysvar.CH_state==CH_ING) {
         charge_status = CINDEX_CHARGING;
-    } else if (sysvar.batfang &	BACHready) {
+    } else if (sysvar.CH_state==CH_ERR) {
+        charge_status = CINDEX_CHARGEFAULT;
+    } else if (sysvar.CH_state==CH_over) {
         charge_status = CINDEX_CHARGECOMPLETE;
     } else {
-        charge_status = 0;
+        charge_status = CINDEX_UNCHARGED;
     }
 
     if (charge_status_last != charge_status) {
@@ -380,15 +406,15 @@ void checkChargeStatus(void)
     }
 }
 
-void checkClearWaterStatus(void)
+void checkAndReportClearWaterStatus(void)
 {
     u8 static clear_status_last = 0;
     u8 clear_status = 0;
     
     if(IdSensor_fang(IdSensor_CLEAR)) {    //
-        clear_status = IdSensor_CLEAR;
+        clear_status = CINDEX_CLEARWATERSHORTAGE;
     } else {
-        clear_status = 0;
+        clear_status = CINDEX_CLEARWATERNORMAL;
     }
 
     if (clear_status_last != clear_status) {
@@ -400,7 +426,12 @@ void checkClearWaterStatus(void)
 
 void checkAndReportComponentStatus(void)
 {
-    
+    checkAndReportWorkMode();
+    checkAndReportRollerStatus();
+    checkAndReportPumpStatus();
+    checkAndReportBatteryStatus();
+    checkAndReportChargeStatus();
+    checkAndReportClearWaterStatus();
 }
 
 

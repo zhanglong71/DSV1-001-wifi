@@ -179,4 +179,32 @@ f.水泵状态(过载、电流小)
   moto_run() 函数中的 (sysvar.sysfang & MOTO_ERR_2) 需要进一步了解
   
 /*********************************************************************************************************************/
+设备状态上报，协议定义如下：
 
+4.2 MCU状态上报(5.3 MCU回复getChar查询也可用相同的报文体)
+reportChar,xx,{"mop":{"status":0}},            // unknow 未知状态(主机断开及其它)
+reportChar,xx,{"mop":{"status":1}},            // standby 待机
+reportChar,xx,{"mop":{"status":2}},            // standard 标准模式
+reportChar,xx,{"mop":{"status":3}},            // highPower强力模式
+reportChar,xx,{"mop":{"status":4}},            // rinse 大水冲洗模式(可能用不上)
+reportChar,xx,{"mop":{"status":5}},            // cleaning 自清洗模式(可能用不上)
+
+reportChar,xx,{"roller":{"status":1}},       // normal 滚筒电机正常
+reportChar,xx,{"roller":{"status":2}},       // error 滚筒电机故障
+
+reportChar,xx,{"clearWater":{"status":1}},   // clear water normal 清水正常
+reportChar,xx,{"clearWater":{"status":2}},   // clear water shortage 清水不足
+
+reportChar,xx,{"pump":{"status":1}},           // 水泵正常     pumpNormal
+reportChar,xx,{"pump":{"status":2}},           // 水泵过载     pumpOverload
+reportChar,xx,{"pump":{"status":3}},           // 水泵电流过小 pumpCurrentTooSmall
+
+reportChar,xx,{"battery":{"status":1}},        // 电池电压在正常范围
+reportChar,xx,{"battery":{"status":2}},        // 电池电压过低
+reportChar,xx,{"battery":{"level":%u}}         // 电池电量 (0-100)
+
+reportChar,xx,{"charge":{"status":1}},         // 没充电
+reportChar,xx,{"charge":{"status":2}},         // 正在充电
+reportChar,xx,{"charge":{"status":3}},         // 充电完成(区别没充电场景)
+reportChar,xx,{"charge":{"status":4}},         // 充电故障
+/*********************************************************************************************************************/
