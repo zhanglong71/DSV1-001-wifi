@@ -324,7 +324,14 @@ void checkAndReportRollerStatus(void)
 {
     u8 static roller_status_last = 0;
     u8 roller_status = 0;
-    
+
+    if (IDs_.Equipment != f_DragLala) {
+        return;
+    }
+    if(!(sysvar.sysfang & OFF_ON)) {
+        return;
+    }
+
     if (sysvar.sysfang & MOTO_ERR_1) {
         roller_status = CINDEX_ROLLEROVERLOAD;
     } else {  // normal
@@ -343,6 +350,13 @@ void checkAndReportPumpStatus(void)
 {
     u8 static pump_status_last = 0;
     u8 pump_status = 0;
+
+    if (IDs_.Equipment != f_DragLala) {
+        return;
+    }
+    if(!(sysvar.sysfang & OFF_ON)) {
+        return;
+    }
 
     if (IdSensor_fang(IdSensor_PUMP)) { // no pump
         pump_status = CINDEX_PUMPCURRENTSMALL;
@@ -410,7 +424,14 @@ void checkAndReportClearWaterStatus(void)
 {
     u8 static clear_status_last = 0;
     u8 clear_status = 0;
-    
+
+    if (IDs_.Equipment != f_DragLala) {
+        return;
+    }
+    if(!(sysvar.sysfang & OFF_ON)) {
+        return;
+    }
+
     if(IdSensor_fang(IdSensor_CLEAR)) {    //
         clear_status = CINDEX_CLEARWATERSHORTAGE;
     } else {

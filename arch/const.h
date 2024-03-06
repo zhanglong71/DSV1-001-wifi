@@ -73,7 +73,6 @@
 #define CINDEX_FULLSEWAGE             (19)
 #define CINDEX_CLEARWATERNORMAL       (20)
 #define CINDEX_CLEARWATERSHORTAGE     (21)
-#define CINDEX_INSUFFICIENTWATER      (22)
 
 #define CINDEX_PUMPNORMAL             (23)
 #define CINDEX_PUMPOVERLOAD           (24)
