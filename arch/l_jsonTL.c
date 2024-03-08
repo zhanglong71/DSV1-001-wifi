@@ -89,7 +89,7 @@ int reportBatteryLevel(u8 arg)
     u8 len = 0;
     u8Data_t u8Data;
     
-    jsonTypeTx.jHead = "getChar";
+    jsonTypeTx.jHead = "reportChar";
     jsonTypeTx.jBody =buf;
     jsonTypeTx.jLen = strlen(buf);
     
@@ -167,8 +167,8 @@ const static reportStatusBody_t reportStatusBodyArr[] = {
     { CINDEX_PUMPOVERLOAD,        "{\"pump\":{\"status\":2}}"},                  // 水泵过载     pumpOverload
     { CINDEX_PUMPCURRENTSMALL,    "{\"pump\":{\"status\":3}}"},                  // 水泵电流过小 pumpCurrentTooSmall
     
-    { CINDEX_BATTERYNORMAL,       "{\"battery\":{\"status\":1}}"},      // 电池电压在正常范围
-    { CINDEX_BATTERYLOW,          "{\"battery\":{\"status\":2}}"},      // 电池电压过低
+    { CINDEX_BATTERYNORMAL,       "{\"batterystatus\":{\"status\":1}}"},      // 电池电压在正常范围
+    { CINDEX_BATTERYLOW,          "{\"batterystatus\":{\"status\":2}}"},      // 电池电压过低
     
     { CINDEX_UNCHARGED,           "{\"charge\":{\"status\":1}}"},         // 没充电
     { CINDEX_CHARGING,            "{\"charge\":{\"status\":2}}"},         // 正在充电
@@ -304,49 +304,49 @@ jsonTL_t* getDevInfo(u8 idx)
             "\"acKey\":\"2B5F3377287C4920506E604B326D5A6479F44A6942B1FE3C86CAD3E3A5F9654D6BC810E9D216466D843A0385A723CC8E\","
             "\"productSeries\":\"DM6\","
             "\"productKey\":\"f2b80c7c77b840e4b7017029baab9bf6\","
-            // "\"marketName\": \"滴水洗地机DM6\","
-            "\"marketName\":\"DIISEA-DM6\","
-            "\"brand\":\"滴水科技\"}\n"
+            "\"marketName\":\"滴水洗地机DM6\","
+            //"\"marketName\":\"DIISEA-DM6\","
+            "\"brand\":\"滴水科技\"}"
         },
 
         {
             "getDevInfo", 0,
-            "{\"v\": \"1.0.1\","
-            "\"dv\": \"1.0.0\","
-            "\"prodId\": \"2NPQ\","
-            "\"deviceTypeId\": \"19F\","
-            "\"manufacturerId\": \"hlp\","
-            "\"deviceModel\": \"DM6\","
-            "\"deviceTypeNameEn\": \"Scrubber\","
-            "\"manufacturerNameEn\": \"DIISEA\","
-            "\"networkType\": \"BLE\","
+            "{\"v\":\"1.0.1\","
+            "\"dv\":\"1.0.0\","
+            "\"prodId\":\"2NPQ\","
+            "\"deviceTypeId\":\"19F\","
+            "\"manufacturerId\":\"hlp\","
+            "\"deviceModel\":\"DM6\","
+            "\"deviceTypeNameEn\":\"Scrubber\","
+            "\"manufacturerNameEn\":\"DIISEA\","
+            "\"networkType\":\"BLE\","
             "\"acKey\":\"2B5F3377287C4920506E604B326D5A6479F44A6942B1FE3C86CAD3E3A5F9654D6BC810E9D216466D843A0385A723CC8E\","
-            "\"productSeries\": \"DM6\","
-            "\"productKey\": \"f2b80c7c77b840e4b7017029baab9bf6\","
-            "\"marketName\": \"滴水洗地机DM6\","
-            "\"brand\": \"滴水科技\"}\n"
+            "\"productSeries\":\"DM6\","
+            "\"productKey\":\"f2b80c7c77b840e4b7017029baab9bf6\","
+            "\"marketName\":\"滴水洗地机DM6\","
+            "\"brand\":\"滴水科技\"}"
         },
 
         {
             "getDevInfo", 0,
-            "{\"v\": \"1.0.1\","
-            "\"dv\": \"1.0.0\","
-            "\"prodId\": \"2NPQ\","
-            "\"deviceTypeId\": \"19F\","
-            "\"manufacturerId\": \"hlp\","
-            "\"deviceModel\": \"DM6\","
-            "\"deviceTypeNameEn\": \"Scrubber\","
-            "\"manufacturerNameEn\": \"DIISEA\","
-            "\"networkType\": \"BLE\","
-            "\"near\": {"
-                "\"type\": 1,"
-                "\"trp\": -8"
+            "{\"v\":\"1.0.1\","
+            "\"dv\":\"1.0.0\","
+            "\"prodId\":\"2NPQ\","
+            "\"deviceTypeId\":\"19F\","
+            "\"manufacturerId\":\"hlp\","
+            "\"deviceModel\":\"DM6\","
+            "\"deviceTypeNameEn\":\"Scrubber\","
+            "\"manufacturerNameEn\":\"DIISEA\","
+            "\"networkType\":\"BLE\","
+            "\"near\":{"
+                "\"type\":1,"
+                "\"trp\":-8"
             "},"
             "\"acKey\":\"2B5F3377287C4920506E604B326D5A6479F44A6942B1FE3C86CAD3E3A5F9654D6BC810E9D216466D843A0385A723CC8E\","
-            "\"productSeries\": \"DM6\","
-            "\"productKey\": \"f2b80c7c77b840e4b7017029baab9bf6\","
-            "\"marketName\": \"滴水洗地机DM6\","
-            "\"brand\": \"滴水科技\"}\n"
+            "\"productSeries\":\"DM6\","
+            "\"productKey\":\"f2b80c7c77b840e4b7017029baab9bf6\","
+            "\"marketName\":\"滴水洗地机DM6\","
+            "\"brand\":\"滴水科技\"}"
         }
     };
 
@@ -367,7 +367,7 @@ jsonTL_t* getService(u8 idx)
                     "\"roller\","
                     "\"clearWater\","
                     "\"pump\","
-                    "\"battery\","
+                    "\"batterystatus\","
                     "\"charge\""
                     "],"
                 "\"sType\": ["
@@ -375,7 +375,7 @@ jsonTL_t* getService(u8 idx)
                     "\"roller\","
                     "\"clearWater\","
                     "\"pump\","
-                    "\"battery\","
+                    "\"batterystatus\","
                     "\"charge\""
                 "]"
             "}"
@@ -455,6 +455,9 @@ void sm_sendData(jsonTL_t* jp)
         
         /** lllllllll length **/
         len = strlen(p->jBody);
+        if (strchr(p->jBody, '\n')) {
+            len--;
+        }
         if (sprintf(buf, "%d", len)) {
             for (int i = 0; i < strlen(buf); i++) {
                 u8Data.u8Val = buf[i];
@@ -483,12 +486,14 @@ void sm_sendData(jsonTL_t* jp)
             return; 
         }
         len = strlen(p->jBody);
-        for (int i = 0; ((total < len) && (i < Mu8FIFO_bufLen(&g_uart3TxQue))); i++, total++) {
+        for (int i = 0; ((total < len) && (i < Mu8FIFO_bufLen(&g_uart3TxQue) - 1)); i++, total++) {
             u8Data.u8Val = p->jBody[total];
             u8FIFOin_irq(&g_uart3TxQue, &u8Data);
         }
 
         if (total >= len) {               /** the last transmit part **/
+            u8Data.u8Val = '\n';
+            u8FIFOin_irq(&g_uart3TxQue, &u8Data);
             s_smStatus = sm_end;
         }
     } else if (s_smStatus == sm_end) {   /** transmit over **/
@@ -755,6 +760,7 @@ objType_t sm_receiveData(u8 *data)
     return obj_none;
 }
 
+#if 0
 int sm_receiveDataLen(const u8FIFO_t *que, u8 *data)
 {
     
@@ -768,4 +774,5 @@ void CmdProcess(u8* CommId)
         //}
     }
 }
+#endif
 

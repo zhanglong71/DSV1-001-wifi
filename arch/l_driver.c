@@ -73,7 +73,7 @@ int sysProcess(unsigned *pMsg)
         
     case CREPORT_RSPOK:
         /** do nothing **/
-        #if 1  //?????????????????? for test only
+        #if 0  //?????????????????? for test only
         u8Data.u8Val = 't';
         u8FIFOin_irq(&g_uart3TxQue, &u8Data);
         u8Data.u8Val = 'e';
@@ -108,7 +108,7 @@ int sysProcess(unsigned *pMsg)
         break;
     #endif
     case CSCAN_WIFI:
-         #if 1  //?????????????????? for test only
+         #if 0  //?????????????????? for test only
         u8Data.u8Val = 's';
         u8FIFOin_irq(&g_uart3TxQue, &u8Data);
         u8Data.u8Val = 'c';
@@ -129,7 +129,7 @@ int sysProcess(unsigned *pMsg)
         break;
         
      case CCONN_WIFI:
-         #if 1  //?????????????????? for test only
+         #if 0  //?????????????????? for test only
         u8Data.u8Val = 'c';
         u8FIFOin_irq(&g_uart3TxQue, &u8Data);
         u8Data.u8Val = 'o';
@@ -142,11 +142,13 @@ int sysProcess(unsigned *pMsg)
         u8FIFOin_irq(&g_uart3TxQue, &u8Data);
         #endif
          /** do test only! 2-byte data !!! **/
+             #if 0
              len = strlen(buf);
              for(int i = 0; i < len; i++) {
                   u8Data.u8Val = buf[i];
                   u8FIFOin_irq(&g_uart3TxQue, &u8Data);
-             }         
+             }    
+             #endif
         break;
         
     case CRESET_NET:
@@ -291,7 +293,7 @@ void key_scan4setwifi(void)
 void checkAndReportWorkMode(void)
 {
     u8 static mode_last = 0;
-    u8 mode = 0;
+    u8 mode = sysvar.Modes;
     u8 index = 0;
 
     mode = sysvar.Modes;
