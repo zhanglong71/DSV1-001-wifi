@@ -82,7 +82,14 @@
 
 #define	MisGetChar(idx)  ((idx) == 3)    /** the index in table commandKeyArr **/
 #define	MisGetCharMopStatus(idx, len, body)  (MisGetChar(idx) && ((len) == 3) && (strnstr((body), "mop", len) != NULL))    /** the index in table commandKeyArr **/
-
+#define	MisGetCharRollerStatus(idx, len, body)  (MisGetChar(idx) && ((len) == 6) && (strnstr((body), "roller", len) != NULL))    /** the index in table commandKeyArr **/
+#define	MisGetCharClearWaterStatus(idx, len, body)  (MisGetChar(idx) && ((len) == 10) && (strnstr((body), "clearWater", len) != NULL))    /** the index in table commandKeyArr **/
+#define	MisGetCharPumpStatus(idx, len, body)  (MisGetChar(idx) && ((len) == 4) && (strnstr((body), "pump", len) != NULL))    /** the index in table commandKeyArr **/
+#define	MisGetCharBatteryStatus(idx, len, body)  (MisGetChar(idx) && ((len) == 13) && (strnstr((body), "batterystatus", len) != NULL))    /** the index in table commandKeyArr **/
+#define	MisGetCharChargeStatus(idx, len, body)  (MisGetChar(idx) && ((len) == 6) && (strnstr((body), "charge", len) != NULL))    /** the index in table commandKeyArr **/
+#define	MisGetCharNetInfoStatus(idx, len, body)  (MisGetChar(idx) && ((len) == 7) && (strnstr((body), "netInfo", len) != NULL))    /** the index in table commandKeyArr **/
+#define	MisGetCharUpdateStatus(idx, len, body)  (MisGetChar(idx) && ((len) == 7) && (strnstr((body), "update", len) != NULL))    /** the index in table commandKeyArr **/
+#define	MisGetCharStatus(idx, len, body)  (MisGetChar(idx) && ((len) == 7) && (strnstr((body), "status", len) != NULL))    /** the index in table commandKeyArr **/
 
 #define	MisScanWifi(idx)  ((idx) == 5)       /** the index in table commandKeyArr **/
 #define	MisScanWifiRespFail(idx, len, body) (MisScanWifi(idx) && (MisRespFail(len, body)))

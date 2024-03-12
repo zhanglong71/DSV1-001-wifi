@@ -47,9 +47,34 @@ int sysProcess(unsigned *pMsg)
         break;
 
     case CGET_CHAR:
-        (void)reportGetCharCmd();
+        /** do nothng **/
+        //(void)reportGetCharCmd();
         break;
-		
+        
+    case CGETCHAR_MOP:
+        (void)checkAndAckGetCharWorkMode();
+        break;
+    case CGETCHAR_ROLLER:
+        (void)checkAndAckGetCharRollerStatus();
+        break;
+    case CGETCHAR_CLEARWATER:
+        (void)checkAndAckGetCharClearWaterStatus();
+        break;
+    case CGETCHAR_PUMP:
+        (void)checkAndAckGetCharPumpStatus();
+        break;
+    case CGETCHAR_BATTERY:
+        (void)checkAndAckGetCharBatteryStatus();
+        break;
+    case CGETCHAR_CHARGE:
+        (void)checkAndAckGetCharChargeStatus();
+        break;
+    case CGETCHAR_NETINFO:
+        break;
+    case CGETCHAR_UPDATE:
+        break;
+
+   
     case CPUT_CHAR:
 			(void)JsonParse(NULL, NULL);
          #if 1  //?????????????????? for test only
@@ -68,11 +93,13 @@ int sysProcess(unsigned *pMsg)
         
     case CREPORT_RSPERROR:   /** report Services error, try again **/
     case CGETDEVINFO_RSPOK:  /** according protocal report Services after devInfo reported ok **/
+        g_sm_wifiInitStatus = sm_wifiInitStep1;
         (void)reportService(0);
         break;
         
     case CREPORT_RSPOK:
         /** do nothing **/
+        g_sm_wifiInitStatus = sm_wifiInitStep2;
         #if 0  //?????????????????? for test only
         u8Data.u8Val = 't';
         u8FIFOin_irq(&g_uart3TxQue, &u8Data);
@@ -86,12 +113,38 @@ int sysProcess(unsigned *pMsg)
         break;
 
     case CWIFI_STATUS:
+        g_sm_wifiInitStatus = sm_wifiInitComplete;
         /** do what ? **/
-             len = strlen(buf);
-             for(int i = 0; i < len; i++) {
-                  u8Data.u8Val = buf[i];
-                  u8FIFOin_irq(&g_uart3TxQue, &u8Data);
-             }
+#if 0  //?????????????????? for test only
+        u8Data.u8Val = 'w';
+        u8FIFOin_irq(&g_uart3TxQue, &u8Data);
+        u8Data.u8Val = 'i';
+        u8FIFOin_irq(&g_uart3TxQue, &u8Data);
+        u8Data.u8Val = 'f';
+        u8FIFOin_irq(&g_uart3TxQue, &u8Data);
+        u8Data.u8Val = 'i';
+        u8FIFOin_irq(&g_uart3TxQue, &u8Data);
+        u8Data.u8Val = 'S';
+        u8FIFOin_irq(&g_uart3TxQue, &u8Data);
+        u8Data.u8Val = 't';
+        u8FIFOin_irq(&g_uart3TxQue, &u8Data);
+        u8Data.u8Val = 'a';
+        u8FIFOin_irq(&g_uart3TxQue, &u8Data);
+        u8Data.u8Val = 't';
+        u8FIFOin_irq(&g_uart3TxQue, &u8Data);
+        u8Data.u8Val = 'u';
+        u8FIFOin_irq(&g_uart3TxQue, &u8Data);
+        u8Data.u8Val = 's';
+        u8FIFOin_irq(&g_uart3TxQue, &u8Data);
+        u8Data.u8Val = ':';
+        u8FIFOin_irq(&g_uart3TxQue, &u8Data);
+
+        len = strlen(buf);
+        for(int i = 0; i < len; i++) {
+            u8Data.u8Val = buf[i];
+            u8FIFOin_irq(&g_uart3TxQue, &u8Data);
+        }
+#endif
         break;    
         
     case CHEART_BEAT:
@@ -176,6 +229,9 @@ int sysProcess(unsigned *pMsg)
         ClrTimer_irq(&g_timer[1]);
         break;
         
+    case CCMPNT_STATUS:
+        checkAndReportComponentStatus();
+        break;
     default:
         iRet = FALSE;
         break;	
@@ -289,6 +345,41 @@ void key_scan4setwifi(void)
 #endif
 #endif
 }
+/*************************************************************************************/
+int checkWorkModeChange(u8* status)
+{
+    u8 static mode_last = 0;
+    u8 mode = sysvar.Modes;
+
+    if (status == NULL) {
+        return FALSE;
+    }
+    
+    /** mechine disconnected **/
+    if (IDs_.Equipment != f_DragLala) {
+        if (mode_last != mode) {
+            mode_last = mode;
+            *status = CINDEX_UNKNOW;
+            return TRUE;
+        }
+    }
+
+    /** runing or stoped **/
+    if(sysvar.sysfang & OFF_ON) {
+        if (mode_last != mode) {
+            mode_last = mode;
+            *status = getIdxbyMode(mode);
+            return TRUE;
+        }
+    } else {
+        if (mode_last != mode) {
+            mode_last = mode;
+            *status = CINDEX_STANDBY;
+            return TRUE;
+        }
+    }
+    return FALSE;
+}
 
 void checkAndReportWorkMode(void)
 {
@@ -322,139 +413,309 @@ void checkAndReportWorkMode(void)
     }
 }
 
-void checkAndReportRollerStatus(void)
+void checkAndAckGetCharWorkMode(void)
+{
+    u8 static mode_last = 0;
+    u8 mode = sysvar.Modes;
+    u8 index = 0;
+
+    mode = sysvar.Modes;
+    /** mechine disconnected **/
+    if (IDs_.Equipment != f_DragLala) {
+        if (mode_last != mode) {
+            mode_last = mode;
+            index = CINDEX_UNKNOW;
+            (void)getCharAckComponentStatus(index);
+        }
+        return;
+    }
+
+    /** runing or stoped **/
+    if(sysvar.sysfang & OFF_ON) {
+        if (mode_last != mode) {
+            mode_last = mode;
+            (void)getCharAckComponentStatus(index);
+        }
+    } else {
+        if (mode_last != mode) {
+            mode_last = mode;
+            index = CINDEX_STANDBY;
+            (void)getCharAckComponentStatus(index);
+        }
+    }
+}
+/*********************roller***********************************************************************/
+int checkRollerStatusChange(u8* status)
 {
     u8 static roller_status_last = 0;
     u8 roller_status = 0;
-
+    
+    if (status == NULL ) { /** something wrong**/
+        return FALSE;
+    }
     if (IDs_.Equipment != f_DragLala) {
-        return;
+        return FALSE;
     }
     if(!(sysvar.sysfang & OFF_ON)) {
-        return;
+        return FALSE;
     }
 
     if (sysvar.sysfang & MOTO_ERR_1) {
-        roller_status = CINDEX_ROLLEROVERLOAD;
+        *status = CINDEX_ROLLEROVERLOAD;
     } else {  // normal
-        roller_status = CINDEX_ROLLERNORMAL;
+        *status = CINDEX_ROLLERNORMAL;
     }
     
-    if (roller_status_last != roller_status) {
-        roller_status_last = roller_status;
+    if (roller_status_last != *status) {
+        roller_status_last = *status;
+        /** report **/
+        return TRUE;
+    }
+    return FALSE;
+}
+
+void checkAndReportRollerStatus(void)
+{
+    u8 roller_status = 0;
+
+    if (checkRollerStatusChange(&roller_status) == TRUE) {
         /** report **/
         (void)reportComponentStatus(roller_status);
     }
 }
 
-/** pump overload/ **/
-void checkAndReportPumpStatus(void)
+void checkAndAckGetCharRollerStatus(void)
+{
+    u8 roller_status = 0;
+
+    if (checkRollerStatusChange(&roller_status) == TRUE) {
+        /** report **/
+        (void)getCharAckComponentStatus(roller_status);
+    }
+}
+
+
+/************************** pump *****************************************************************/
+int checkPumpStatusChange(u8* status)
 {
     u8 static pump_status_last = 0;
-    u8 pump_status = 0;
 
+    if (status == NULL) {
+        return FALSE;
+    }
     if (IDs_.Equipment != f_DragLala) {
-        return;
+        return FALSE;
     }
     if(!(sysvar.sysfang & OFF_ON)) {
-        return;
+        return FALSE;
     }
 
     if (IdSensor_fang(IdSensor_PUMP)) { // no pump
-        pump_status = CINDEX_PUMPCURRENTSMALL;
+        *status = CINDEX_PUMPCURRENTSMALL;
     } else if (IdSensor_fang(IdSensor_PUMPERR) || (sysvar.sysfang & MOTO_ERR_2)) { // pump error
-        pump_status = CINDEX_PUMPOVERLOAD;
+        *status = CINDEX_PUMPOVERLOAD;
     } else {  // normal
-        pump_status = CINDEX_PUMPNORMAL;
+        *status = CINDEX_PUMPNORMAL;
     }
 
-    if (pump_status_last != pump_status) {
-        pump_status_last = pump_status;
+    if (pump_status_last != *status) {
+        pump_status_last = *status;
+        /** report **/
+        return TRUE;
+    }
+    
+    return FALSE;
+
+}
+
+void checkAndReportPumpStatus(void)
+{
+    u8 pump_status = 0;
+
+    if (checkPumpStatusChange(&pump_status) == TRUE) {
         /** report **/
         (void)reportComponentStatus(pump_status);
     }
 }
 
-void checkAndReportBatteryStatus(void)
+void checkAndAckGetCharPumpStatus(void)
+{
+    u8 pump_status = 0;
+
+    if (checkPumpStatusChange(&pump_status) == TRUE) {
+        /** report **/
+        (void)getCharAckComponentStatus(pump_status);
+    }
+}
+/**************************************************************************************************/
+int checkBatteryChange(u8* status)
 {
     u8 static battery_status_last = 0;
-    u8 battery_status = 0;
-    
+
+    if (status == NULL) {
+        return FALSE;
+    }
     if(sysvar.batfang & (BACH_low|BACH_lowin|BACH_lowin2)) {  // 
-        battery_status = CINDEX_BATTERYLOW;
+        *status = CINDEX_BATTERYLOW;
     } else {  // normal
-        battery_status = CINDEX_BATTERYNORMAL;
+        *status = CINDEX_BATTERYNORMAL;
     }
     
-    if (battery_status_last != battery_status) {
-        battery_status_last = battery_status;
+    if (battery_status_last != *status) {
+        battery_status_last = *status;
+        /** report **/
+        return TRUE;
+    }
+    return FALSE;
+}
+
+void checkAndReportBatteryStatus(void)
+{
+    u8 battery_status = 0;
+    
+    if (checkBatteryChange(&battery_status) == TRUE) {
         /** report **/
         (void)reportComponentStatus(battery_status);
     }
 }
 
-void checkAndReportChargeStatus(void)
+void checkAndAckGetCharBatteryStatus(void)
+{
+    u8 battery_status = 0;
+    
+    if (checkBatteryChange(&battery_status) == TRUE) {
+        /** report **/
+        (void)getCharAckComponentStatus(battery_status);
+    }
+}
+
+/**************************************************************************************************/
+int checkChargeChange(u8* status)
 {
     u8 static charge_status_last = 0;
-    u8 charge_status = 0;
 
 /**
- * note: this MACRO define must same as the CHARGING.c 
+ * note: this MACRO define must same as the macro in CHARGING.c
  **/
 #define CH_ING					2
 #define CH_over					3
 #define CH_ERR					5
-
+    if (status == NULL) {
+        return FALSE;
+    }
     if (sysvar.CH_state==CH_ING) {
-        charge_status = CINDEX_CHARGING;
+        *status = CINDEX_CHARGING;
     } else if (sysvar.CH_state==CH_ERR) {
-        charge_status = CINDEX_CHARGEFAULT;
+        *status = CINDEX_CHARGEFAULT;
     } else if (sysvar.CH_state==CH_over) {
-        charge_status = CINDEX_CHARGECOMPLETE;
+        *status = CINDEX_CHARGECOMPLETE;
     } else {
-        charge_status = CINDEX_UNCHARGED;
+        *status = CINDEX_UNCHARGED;
     }
 
-    if (charge_status_last != charge_status) {
-        charge_status_last = charge_status;
+    if (charge_status_last != *status) {
+        charge_status_last = *status;
+        /** report **/
+        return TRUE;
+    }
+    return FALSE;
+}
+
+void checkAndReportChargeStatus(void)
+{
+    u8 charge_status = 0;
+
+    if (checkChargeChange(&charge_status) == TRUE) {
         /** report **/
         (void)reportComponentStatus(charge_status);
     }
 }
 
-void checkAndReportClearWaterStatus(void)
+void checkAndAckGetCharChargeStatus(void)
+{
+    u8 charge_status = 0;
+
+    if (checkChargeChange(&charge_status) == TRUE) {
+        /** report **/
+        (void)getCharAckComponentStatus(charge_status);
+    }
+}
+/**************************************************************************************************/
+int checClearWaterChange(u8* status)
 {
     u8 static clear_status_last = 0;
-    u8 clear_status = 0;
 
+    if (status == NULL) {
+        return FALSE;
+    }
+    
     if (IDs_.Equipment != f_DragLala) {
-        return;
+        return FALSE;
     }
     if(!(sysvar.sysfang & OFF_ON)) {
-        return;
+        return FALSE;
     }
 
     if(IdSensor_fang(IdSensor_CLEAR)) {    //
-        clear_status = CINDEX_CLEARWATERSHORTAGE;
+        *status = CINDEX_CLEARWATERSHORTAGE;
     } else {
-        clear_status = CINDEX_CLEARWATERNORMAL;
+        *status = CINDEX_CLEARWATERNORMAL;
     }
 
-    if (clear_status_last != clear_status) {
-        clear_status_last = clear_status;
+    if (clear_status_last != *status) {
+        clear_status_last = *status;
+        /** report **/
+       return TRUE;;
+    }
+    return FALSE;
+}
+
+void checkAndReportClearWaterStatus(void)
+{
+    u8 clear_status = 0;
+
+    if (checClearWaterChange(&clear_status) == TRUE) {
         /** report **/
         (void)reportComponentStatus(clear_status);
     }
 }
 
+void checkAndAckGetCharClearWaterStatus(void)
+{
+    u8 clear_status = 0;
+    if (checClearWaterChange(&clear_status) == TRUE) {
+        /** report **/
+        (void)getCharAckComponentStatus(clear_status);
+    }
+}
+
 void checkAndReportComponentStatus(void)
 {
+    static u8 fp_index = 0;
+    paction_t_0 fp_tab[] = {
+        checkAndReportWorkMode,
+        checkAndReportRollerStatus,
+        checkAndReportPumpStatus,
+        checkAndReportBatteryStatus,
+        checkAndReportChargeStatus,
+        checkAndReportClearWaterStatus
+    };
+
+    if (!((g_sm_wifiInitStatus == sm_wifiInitComplete) || (g_sm_wifiInitStatus == sm_wifiInitStep2))) {
+        return;
+    }
+    fp_index++;
+    if (fp_index >= MTABSIZE(fp_tab)) {
+        fp_index = 0;
+    }
+    fp_tab[fp_index]();
+    #if 0
     checkAndReportWorkMode();
     checkAndReportRollerStatus();
     checkAndReportPumpStatus();
     checkAndReportBatteryStatus();
     checkAndReportChargeStatus();
     checkAndReportClearWaterStatus();
+    #endif
 }
-
 

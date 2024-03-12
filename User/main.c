@@ -23,16 +23,24 @@ ADCCLK	9000000
   * bit 1: wait for double click 
   * bit 2..16 reserved
   **/
- Timer_t g_timer[TIMER_NUM];		/** g_timer[0] for global, g_timer[1] for uart3 receive **/
+ Timer_t g_timer[TIMER_NUM];		/** g_timer[0] for global, g_timer[1] for uart3 receive, g_timer[2] for check component status and report to the wifi module  **/
  /**
   * g_timer[0] for system tick
   * g_timer[1] for uart3 timer out
-  * g_timer[2] for key or other ...
+  * g_timer[2] for check component status and report to the wifi module
   **/
 u8FIFO_t g_uart3TxQue;
 u8FIFO_t g_uart3RxQue;
 
-
+u8 g_sm_wifiInitStatus;
+/**
+ * ³õÊ¼»¯×´Ì¬»ú
+ * 0 --- sm_none (wait for REQ getDevInfo message)
+ * 1 --- sm_init (ACK the getDevInfo message, then wait for reportService)
+ * 2 --- sm_normal (initial completed)
+ * 3 --- 
+ **/
+/*********************************************************************************/
  //SysTickåˆå§‹åŒ–é…ç½®
  uint32_t SysTick_Config(uint64_t ticks){
      SysTick->CTLR = 0x0000;
@@ -75,6 +83,8 @@ int main(void){
 	MGPIO_Toggle_INIT();
     //wifi_Init();
     USART3_CFG();
+    g_flag = 0;
+    g_sm_wifiInitStatus = sm_none;
     fstack_init(&g_fstack);
     func.func = f_idle;
     fstack_push(&g_fstack, &func);
@@ -82,6 +92,7 @@ int main(void){
         ClrTimer(&g_timer[i]);
     }
 	SetTimer_irq(&g_timer[0], TIMER_1SEC, CMSG_TMR);
+	SetTimer_irq(&g_timer[2], TIMER_1SEC, CCMPNT_STATUS);
 		
 	u8FIFOinit(&g_uart3TxQue);
 	u8FIFOinit(&g_uart3RxQue);
@@ -124,7 +135,6 @@ int main(void){
     	}
 //  		wifi_uart_service();
 // #else
-    checkAndReportComponentStatus();
     DAEMON_USART3_Send(&g_uart3TxQue);
     if(msgq_out_irq(&g_msgq, &msg) == FALSE) {     	/** ï¿½ï¿½ï¿½ï¿½Ï¢ï¿½ï¿½? **/
         continue;

@@ -9,7 +9,8 @@ extern	Timer_t g_timer[TIMER_NUM];		/** 约定g_timer[0]不用在sysProcess()中
 extern u8FIFO_t g_uart3TxQue;
 extern u8FIFO_t g_uart3RxQue;
 extern u16 g_tick;
-extern	u16 g_flag;
+extern u16 g_flag;
+extern u8 g_sm_wifiInitStatus;
 #if 0
 extern	u8	g_IT_flag;
 extern  int g_tmr_iVopBusy;

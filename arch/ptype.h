@@ -48,6 +48,15 @@ typedef enum {
     CREPORT_RSPOK,
     CREPORT_RSPERROR,
     CGET_CHAR,
+    CGETCHAR_STATUS,
+    CGETCHAR_MOP,
+    CGETCHAR_ROLLER,
+    CGETCHAR_CLEARWATER,
+    CGETCHAR_PUMP,
+    CGETCHAR_BATTERY,
+    CGETCHAR_CHARGE,
+    CGETCHAR_NETINFO,
+    CGETCHAR_UPDATE,
     CPUT_CHAR,
     CHEART_BEAT,
     CWIFI_STATUS,
@@ -61,6 +70,7 @@ typedef enum {
     CRESETNET_RSPOK,
     CRESETNET_RSPFAIL,
     //CWIFI_TEST,
+    CCMPNT_STATUS,
     
     CMSG_TMR,
     CMSG_DLAY, 	/** 时钟 **/
@@ -275,7 +285,11 @@ typedef struct adcData_s{
 
 typedef enum {
     sm_none = 0,
-    sm_init, 
+    sm_wifiInitStep1,
+    sm_wifiInitStep2,
+    sm_wifiInitComplete,
+    sm_init,
+    sm_normal,
     sm_step,
     sm_key,
     sm_sendBody,

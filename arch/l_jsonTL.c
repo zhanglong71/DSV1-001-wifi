@@ -103,7 +103,7 @@ int reportBatteryLevel(u8 arg)
     u8FIFOin_irq(&g_uart3TxQue, &u8Data); 
     
     /** lllllllll length **/
-    sprintf(buf, "{\"battery\":{\"level\":\"%u\"}}",  arg);
+    sprintf(buf, "{\"batterystatus\":{\"level\":%u}}",  arg);
     len = strlen(buf);
     if (sprintf(buf, "%d", len)) {
         for (int i = 0; i < strlen(buf); i++) {
@@ -115,7 +115,7 @@ int reportBatteryLevel(u8 arg)
     u8FIFOin_irq(&g_uart3TxQue, &u8Data);
     
     /** bbbbbbbbb body **/
-    sprintf(buf, "{\"battery\":{\"level\":\"%u\"}}",  arg);
+    sprintf(buf, "{\"batterystatus\":{\"level\":%u}}",  arg);
     for (int i = 0; i < strlen(buf); i++) {
         u8Data.u8Val = buf[i];
         u8FIFOin_irq(&g_uart3TxQue, &u8Data);
@@ -177,15 +177,15 @@ const static reportStatusBody_t reportStatusBodyArr[] = {
     #endif
 };
 
-static u8 getIdxbyMode(u8 mode)
+u8 getIdxbyMode(u8 mode)
 {
     const static pair_u8u8_t statusNum2IdxArr[] = {
         {0, CINDEX_UNKNOW},
         {MODE_1, CINDEX_STANDARD},
         {MODE_2, CINDEX_HIGHPOWER},
         {MODE_3, CINDEX_HIGHPOWER},
-        {MODE_RINSE, CINDEX_RINSE},
-        {MODE_CLEANING, CINDEX_CLEANING},
+        {MODE_RINSE, CINDEX_STANDARD},     /*** !!!!!! ***/
+        {MODE_CLEANING, CINDEX_STANDARD},  /*** !!!!!! ***/
     };
 
     for (int i = 0; i < MTABSIZE(statusNum2IdxArr); i++) {
@@ -286,6 +286,30 @@ int reportComponentStatus(u8 statusIndex)
     return 0;
 }
 
+
+int getCharAckComponentStatus(u8 statusIndex)
+{
+    static jsonTL_t jsonTypeTx;
+    u8 idx = 0;
+
+    for (idx = 0; idx < MTABSIZE(reportStatusBodyArr); idx++) {
+        if (reportStatusBodyArr[idx].index == statusIndex) {
+            break;
+        }
+    }
+
+    if (idx >= MTABSIZE(reportStatusBodyArr)) {
+        return 0;
+    }
+
+    jsonTypeTx.jHead = "getChar";
+    jsonTypeTx.jBody = reportStatusBodyArr[statusIndex].body;
+    jsonTypeTx.jLen = strlen(jsonTypeTx.jBody);
+    
+    sm_sendData(&jsonTypeTx);
+    return 0;
+}
+
 /*********************************************************************/
 jsonTL_t* getDevInfo(u8 idx)
 {
@@ -308,7 +332,6 @@ jsonTL_t* getDevInfo(u8 idx)
             //"\"marketName\":\"DIISEA-DM6\","
             "\"brand\":\"滴水科技\"}"
         },
-
         {
             "getDevInfo", 0,
             "{\"v\":\"1.0.1\","
@@ -324,6 +347,7 @@ jsonTL_t* getDevInfo(u8 idx)
             "\"productSeries\":\"DM6\","
             "\"productKey\":\"f2b80c7c77b840e4b7017029baab9bf6\","
             "\"marketName\":\"滴水洗地机DM6\","
+            //"\"marketName\":\"DIISEA-DM6\","
             "\"brand\":\"滴水科技\"}"
         },
 
@@ -362,24 +386,30 @@ jsonTL_t* getService(u8 idx)
         {
             "reportService", 0,
             "{"
-                "\"sId\": ["
-                    "\"mop\","
-                    "\"roller\","
-                    "\"clearWater\","
+                "\"sId\":["
+                    "\"status\","
+                    "\"charge\","
                     "\"pump\","
+                    "\"clearWater\","
+                    "\"roller\","
                     "\"batterystatus\","
-                    "\"charge\""
+                    "\"mop\","
+                    "\"netInfo\","
+                    "\"update\""
                     "],"
-                "\"sType\": ["
-                    "\"mop\","
-                    "\"roller\","
-                    "\"clearWater\","
+                "\"sType\":["
+                    "\"status\","
+                    "\"charge\","
                     "\"pump\","
+                    "\"clearWater\","
+                    "\"roller\","
                     "\"batterystatus\","
-                    "\"charge\""
+                    "\"mop\","
+                    "\"netInfo\","
+                    "\"ota\""
                 "]"
             "}"
-        }   
+        }
        // {"reportService", 0, ""}
     };
 
@@ -392,7 +422,7 @@ jsonTL_t* getService(u8 idx)
 jsonTL_t* getHeartbeat(void)
 {
     static jsonTL_t heartbeat[] = {
-        {"\"heartbeat\"",0,""}
+        {"heartbeat",0,""}
     };
     return (&heartbeat[0]);
 }
@@ -692,9 +722,43 @@ objType_t sm_receiveData(u8 *data)
                 msgq_in_irq(&g_msgq, &msg);
                 return obj_none;
             } else if(MisGetCharMopStatus(s_keyIdx, s_bodyLen, data)) {
-                msg.msgType = CGET_CHAR;
+                msg.msgType = CGETCHAR_MOP;
                 msgq_in_irq(&g_msgq, &msg);
                 return obj_none;
+
+            } else if(MisGetCharMopStatus(s_keyIdx, s_bodyLen, data)) {
+                msg.msgType = CGETCHAR_MOP;
+                msgq_in_irq(&g_msgq, &msg);
+                return obj_none;
+            } else if(MisGetCharRollerStatus(s_keyIdx, s_bodyLen, data)) {
+                msg.msgType = CGETCHAR_ROLLER;
+                msgq_in_irq(&g_msgq, &msg);
+                return obj_none;
+            } else if(MisGetCharClearWaterStatus(s_keyIdx, s_bodyLen, data)) {
+                msg.msgType = CGETCHAR_CLEARWATER;
+                msgq_in_irq(&g_msgq, &msg);
+                return obj_none;
+            } else if(MisGetCharPumpStatus(s_keyIdx, s_bodyLen, data)) {
+                msg.msgType = CGETCHAR_PUMP;
+                msgq_in_irq(&g_msgq, &msg);
+                return obj_none;
+            } else if(MisGetCharBatteryStatus(s_keyIdx, s_bodyLen, data)) {
+                msg.msgType = CGETCHAR_BATTERY;
+                msgq_in_irq(&g_msgq, &msg);
+                return obj_none;
+            } else if(MisGetCharChargeStatus(s_keyIdx, s_bodyLen, data)) {
+                msg.msgType = CGETCHAR_CHARGE;
+                msgq_in_irq(&g_msgq, &msg);
+                return obj_none;
+            } else if(MisGetCharNetInfoStatus(s_keyIdx, s_bodyLen, data)) {
+                msg.msgType = CGETCHAR_NETINFO;
+                msgq_in_irq(&g_msgq, &msg);
+                return obj_none;
+            } else if(MisGetCharUpdateStatus(s_keyIdx, s_bodyLen, data)) {
+                msg.msgType = CGETCHAR_UPDATE;
+                msgq_in_irq(&g_msgq, &msg);
+                return obj_none;
+
             } else if(MisPutChar(s_keyIdx)) {
                 msg.msgType = CPUT_CHAR;
                 msgq_in_irq(&g_msgq, &msg);

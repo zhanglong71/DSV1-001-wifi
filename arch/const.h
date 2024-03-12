@@ -21,7 +21,7 @@
 #define CSEND_BUF_NUM	8	//16	 //缓冲区个数
 #define CSEND_BUF_SIZE	16	//16	 //缓冲区大小
 
-#define TIMER_NUM	2       /** 定时器个数 **/
+#define TIMER_NUM	3       /** 定时器个数 **/
 /** 
  * 0 - 计时计数
  * 1 - 开/闭锁

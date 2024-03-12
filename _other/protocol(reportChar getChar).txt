@@ -30,3 +30,13 @@ reportChar,xx,{"charge":{"status":1}}\n         // 没充电
 reportChar,xx,{"charge":{"status":2}}\n         // 正在充电
 reportChar,xx,{"charge":{"status":3}}\n         // 充电完成(区别没充电场景)
 reportChar,xx,{"charge":{"status":4}}\n         // 充电故障
+
+getChar,3,mop
+getChar,4,pump
+getChar,6,status
+getChar,6,charge
+getChar,6,roller
+getChar,6,update
+getChar,7,netInfo
+getChar,10,clearwater
+getChar,13,batterystatus

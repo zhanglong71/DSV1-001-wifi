@@ -16,6 +16,8 @@ objType_t sm_receiveData(u8 *data);
 u8 getCommandKeyArrLen(void);
 jsonTL_t* getCommandKey(u8 idx);
 
+u8 getIdxbyMode(u8 mode);
+
 int reportHeartbeat(unsigned *arg);
 int reportDevInfo(unsigned *arg);
 int reportService(unsigned *arg);
@@ -27,7 +29,8 @@ int reportConnectWifi(void *arg);
 int reportBatteryLevel(u8 arg);
 int reportComponentStatus(u8 statusIndex);
 
-// void reportTest(void);
+int getCharAckComponentStatus(u8 statusIndex);
 
+// void reportTest(void);
 
 #endif
