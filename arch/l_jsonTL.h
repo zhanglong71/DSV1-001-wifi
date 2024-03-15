@@ -11,6 +11,7 @@ jsonTL_t* getService(u8 idx);
 jsonTL_t* getConnectWifi(u8 idx);
 
 void sm_sendData(jsonTL_t* p);
+void sm_sendData_once(jsonTL_t* jp);
 objType_t sm_receiveData(u8 *data);
 
 u8 getCommandKeyArrLen(void);

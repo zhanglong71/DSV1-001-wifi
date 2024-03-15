@@ -11,14 +11,67 @@
 int f_idle(unsigned *pMsg)
 {
     u8Data_t u8Data;
+    u8 cycle = 10;
     switch(((msg_t *)pMsg)->msgType) 
     {
     case CMSG_TMR:
         g_tick++;
-        if ((g_tick % 30) == 5) {  /** updata battery level every 30sec **/
-            (void)reportBatteryLevel(sysvar.BAT_soc);
+        if (sysvar.sysfang & OFF_ON) {
+            cycle = 20;
+        } else {
+            cycle = 10;
         }
-        // SetTimer_irq(&g_timer[2], TIMER_30SEC, CMSG_TMR);  
+        
+        /******************************************************************************************
+         * ³äµç×´Ì¬
+         ******************************************************************************************/
+        if ((g_tick % cycle) == 0) {  /** updata battery level every CYCLE sec **/
+            checkAndReportChargeStatus();
+        }
+        #if 0
+        if (1 || ((g_tick % 30) == 5)) {  /** updata battery level every 30sec **/
+            u8 charge_status;
+            if (checkChargeChange(&charge_status) == TRUE) {
+                reportComponentStatus(charge_status);
+            } else {
+                if (charge_status == CINDEX_UNCHARGED) {
+                    (void)reportBatteryLevel(sysvar.BAT_soc);
+                } else {
+                    reportComponentStatus(charge_status);
+                }
+            }
+        }
+        #endif
+      /******************************************************************************************
+       * ¹¤×÷×´Ì¬ÉÏ±¨
+       ******************************************************************************************/
+      if ((g_tick % cycle) == 1) {  /** updata battery level every CYCLE sec **/
+          checkAndReportWorkMode();
+      }
+      /******************************************************************************************
+       * ¹öÍ²×´Ì¬
+       ******************************************************************************************/
+      if ((g_tick % cycle) == 2) {  /** updata battery level every CYCLE sec **/
+          checkAndReportRollerStatus();
+      }
+      /******************************************************************************************
+       * Ë®±Ã×´Ì¬
+       ******************************************************************************************/
+      if ((g_tick % cycle) == 3) {  /** updata battery level every CYCLE sec **/
+          checkAndReportPumpStatus();
+      }
+      /******************************************************************************************
+       * µç³Ø×´Ì¬
+       ******************************************************************************************/
+      if ((g_tick % cycle) == 4) {  /** updata battery level every CYCLE sec **/
+          checkAndReportBatteryStatus();
+      }
+      /******************************************************************************************
+       * ÇåË®×´Ì¬
+       ******************************************************************************************/
+      if ((g_tick % cycle) == 5) {  /** updata battery level every CYCLE sec **/
+          checkAndReportClearWaterStatus();
+      }
       //???????????????????????????????????????
       #if 0
       int len = 0;

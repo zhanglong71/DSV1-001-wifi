@@ -35,7 +35,7 @@ int reportHeartbeat(unsigned *arg)
 {
     (void)arg;
     jsonTL_t* p = getHeartbeat();
-    sm_sendData(p);
+    sm_sendData_once(p);
     return (TRUE);
 }
 
@@ -56,7 +56,7 @@ int reportResetNet(u8 idx)
     if (idx >= MTABSIZE(resetNetArr)) {
         return (FALSE);
     }
-    sm_sendData(&(resetNetArr[idx]));
+    sm_sendData_once(&(resetNetArr[idx]));
 
     return (TRUE);
 }
@@ -74,6 +74,7 @@ int reportScanWifi(void *arg)
     return (TRUE);
 }
 
+#if 0
 int reportConnectWifi(void *arg)
 {
     (void)arg;
@@ -81,8 +82,10 @@ int reportConnectWifi(void *arg)
     sm_sendData(p);
     return (TRUE);
 }
+#endif
 
-int reportBatteryLevel(u8 arg)
+#if 0
+int reportBatteryLevel_raw(u8 arg)
 {
     jsonTL_t jsonTypeTx;
     u8 buf[64]; 
@@ -120,8 +123,12 @@ int reportBatteryLevel(u8 arg)
         u8Data.u8Val = buf[i];
         u8FIFOin_irq(&g_uart3TxQue, &u8Data);
     }
+
+    u8Data.u8Val = '\n';
+    u8FIFOin_irq(&g_uart3TxQue, &u8Data);
     return (TRUE);
 }
+#endif
 
 const static reportStatusBody_t reportStatusBodyArr[] = {
     #if 0
@@ -169,6 +176,7 @@ const static reportStatusBody_t reportStatusBodyArr[] = {
     
     { CINDEX_BATTERYNORMAL,       "{\"batterystatus\":{\"status\":1}}"},      // 电池电压在正常范围
     { CINDEX_BATTERYLOW,          "{\"batterystatus\":{\"status\":2}}"},      // 电池电压过低
+    { CINDEX_BATTERYLEVEL,        "{\"batterystatus\":{\"level\":%u}}"},
     
     { CINDEX_UNCHARGED,           "{\"charge\":{\"status\":1}}"},         // 没充电
     { CINDEX_CHARGING,            "{\"charge\":{\"status\":2}}"},         // 正在充电
@@ -184,8 +192,8 @@ u8 getIdxbyMode(u8 mode)
         {MODE_1, CINDEX_STANDARD},
         {MODE_2, CINDEX_HIGHPOWER},
         {MODE_3, CINDEX_HIGHPOWER},
-        {MODE_RINSE, CINDEX_STANDARD},     /*** !!!!!! ***/
-        {MODE_CLEANING, CINDEX_STANDARD},  /*** !!!!!! ***/
+        {MODE_RINSE, CINDEX_RINSE},     /*** !!!!!! ***/
+        {MODE_CLEANING, CINDEX_CLEANING},  /*** !!!!!! ***/
     };
 
     for (int i = 0; i < MTABSIZE(statusNum2IdxArr); i++) {
@@ -196,6 +204,7 @@ u8 getIdxbyMode(u8 mode)
     return CINDEX_INVALID;
 }
 
+#if 0
 /**
  * response getChar
  * mode ==> index ==> json info(jhead/jBody/jLen)
@@ -223,12 +232,12 @@ int reportGetCharCmd(void)
     sm_sendData(p);
     return 0;
 }
-
+#endif
 /**
  * ?ϱ????? 
  * ?????? getChar/reportChar
  **/
-#if 1
+#if 0
 jsonTL_t* getReportCmdbyMode(u8 mode)
 {
     static jsonTL_t jsonTypeTx;
@@ -260,6 +269,60 @@ int reportReportCharCmd(void)
 }
 
 #endif
+
+
+int reportBatteryLevel(u8 arg)
+{
+    jsonTL_t jsonTypeTx;
+    u8 buf[64]; 
+    u8 len = 0;
+    u8Data_t u8Data;
+    u8 idx = 0;
+
+    for (idx = 0; idx < MTABSIZE(reportStatusBodyArr); idx++) {
+        if (reportStatusBodyArr[idx].index == CINDEX_BATTERYLEVEL) {
+            break;
+        }
+    }   
+    jsonTypeTx.jHead = "reportChar";
+    jsonTypeTx.jBody =buf;
+    jsonTypeTx.jLen = strlen(buf);
+    
+    /** hhhhhhhhh head **/
+    len = strlen(jsonTypeTx.jHead);
+    for (int i = 0; i < len; i++) {
+        u8Data.u8Val = jsonTypeTx.jHead[i];
+        u8FIFOin_irq(&g_uart3TxQue, &u8Data);
+    }
+    u8Data.u8Val = ',';
+    u8FIFOin_irq(&g_uart3TxQue, &u8Data); 
+    
+    /** lllllllll length **/
+    sprintf(buf, reportStatusBodyArr[idx].body,  arg);
+    len = strlen(buf);
+    if (sprintf(buf, "%d", len)) {
+        for (int i = 0; i < strlen(buf); i++) {
+            u8Data.u8Val = buf[i];
+            u8FIFOin_irq(&g_uart3TxQue, &u8Data);
+        }
+    }
+    u8Data.u8Val = ',';
+    u8FIFOin_irq(&g_uart3TxQue, &u8Data);
+    
+    /** bbbbbbbbb body **/
+    sprintf(buf, reportStatusBodyArr[idx].body,  arg);
+    for (int i = 0; i < strlen(buf); i++) {
+        u8Data.u8Val = buf[i];
+        u8FIFOin_irq(&g_uart3TxQue, &u8Data);
+    }
+
+    u8Data.u8Val = '\n';
+    u8FIFOin_irq(&g_uart3TxQue, &u8Data);
+    return (TRUE);
+}
+
+
+
 /***********************************************************************
  * moto/pump/battery/clear/charge
  ***********************************************************************/
@@ -275,17 +338,16 @@ int reportComponentStatus(u8 statusIndex)
     }
 
     if (idx >= MTABSIZE(reportStatusBodyArr)) {
-        return 0;
+        return (MTABSIZE(reportStatusBodyArr));
     }
 
     jsonTypeTx.jHead = "reportChar";
-    jsonTypeTx.jBody = reportStatusBodyArr[statusIndex].body;
+    jsonTypeTx.jBody = reportStatusBodyArr[idx].body;
     jsonTypeTx.jLen = strlen(jsonTypeTx.jBody);
     
-    sm_sendData(&jsonTypeTx);
+    sm_sendData_once(&jsonTypeTx);
     return 0;
 }
-
 
 int getCharAckComponentStatus(u8 statusIndex)
 {
@@ -299,14 +361,14 @@ int getCharAckComponentStatus(u8 statusIndex)
     }
 
     if (idx >= MTABSIZE(reportStatusBodyArr)) {
-        return 0;
+        return (MTABSIZE(reportStatusBodyArr));
     }
 
     jsonTypeTx.jHead = "getChar";
-    jsonTypeTx.jBody = reportStatusBodyArr[statusIndex].body;
+    jsonTypeTx.jBody = reportStatusBodyArr[idx].body;
     jsonTypeTx.jLen = strlen(jsonTypeTx.jBody);
     
-    sm_sendData(&jsonTypeTx);
+    sm_sendData_once(&jsonTypeTx);
     return 0;
 }
 
@@ -443,6 +505,62 @@ jsonTL_t* getConnectWifi(u8 idx)
     }
 
     return (&ConnectWifiArr[idx]);
+}
+
+/**
+ * send all data at once 
+ * make sure the length of string is less than length of FIFO buff
+ **/
+void sm_sendData_once(jsonTL_t* jp)
+{
+    u8Data_t u8Data;
+    u8 buf[8];
+    int len = 0;
+    int send_count = 0;
+
+    if (jp == NULL) {
+        return;
+    }
+    
+    /** hhhhhhhhh head **/
+    len = strlen(jp->jHead);
+    for (int i = 0; i < len; i++) {
+        u8Data.u8Val = jp->jHead[i];
+        u8FIFOin_irq(&g_uart3TxQue, &u8Data);
+    }
+    u8Data.u8Val = ',';
+    u8FIFOin_irq(&g_uart3TxQue, &u8Data); 
+    
+    /** lllllllll length **/
+    len = strlen(jp->jBody);
+    if (strchr(jp->jBody, '\n')) {
+        len--;
+    }
+    if (sprintf(buf, "%d", len)) {
+        for (int i = 0; i < strlen(buf); i++) {
+            u8Data.u8Val = buf[i];
+            u8FIFOin_irq(&g_uart3TxQue, &u8Data);
+        }
+    }
+    
+    if (len > 0) {
+        u8Data.u8Val = ',';
+        u8FIFOin_irq(&g_uart3TxQue, &u8Data);
+    } else { /** len == 0, nobody need transmit **/
+        u8Data.u8Val = '\n';
+        u8FIFOin_irq(&g_uart3TxQue, &u8Data);
+        return;
+    }
+    /** bbbbbbbbb body **/
+    for (send_count = 0; ((send_count < len) && (send_count < Mu8FIFO_bufLen(&g_uart3TxQue))); send_count++) {
+        u8Data.u8Val = jp->jBody[send_count];
+        u8FIFOin_irq(&g_uart3TxQue, &u8Data);
+    }
+
+    if (send_count >= len) {               /** the last transmit part **/
+        u8Data.u8Val = '\n';
+        u8FIFOin_irq(&g_uart3TxQue, &u8Data);
+    }
 }
 
 

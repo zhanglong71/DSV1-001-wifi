@@ -193,7 +193,7 @@ typedef struct u8FIFO_s {
     u8 out;
     //u8 len;
 	//u8 __pad1;
-    u8 buf[U8FIFOSIZE];     /** 16 bytes **/
+    u8 buf[U8FIFOSIZE];
 } u8FIFO_t;
 
 #if 0

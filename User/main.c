@@ -23,11 +23,11 @@ ADCCLK	9000000
   * bit 1: wait for double click 
   * bit 2..16 reserved
   **/
- Timer_t g_timer[TIMER_NUM];		/** g_timer[0] for global, g_timer[1] for uart3 receive, g_timer[2] for check component status and report to the wifi module  **/
+ Timer_t g_timer[TIMER_NUM];		/** g_timer[0] for global, g_timer[1] for uart3 receive, g_timer[2] for key...  **/
  /**
   * g_timer[0] for system tick
   * g_timer[1] for uart3 timer out
-  * g_timer[2] for check component status and report to the wifi module
+  * g_timer[2] for key
   **/
 u8FIFO_t g_uart3TxQue;
 u8FIFO_t g_uart3RxQue;

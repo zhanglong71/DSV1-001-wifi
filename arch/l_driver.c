@@ -230,7 +230,7 @@ int sysProcess(unsigned *pMsg)
         break;
         
     case CCMPNT_STATUS:
-        checkAndReportComponentStatus();
+        // checkAndReportComponentStatus();
         break;
     default:
         iRet = FALSE;
@@ -383,65 +383,17 @@ int checkWorkModeChange(u8* status)
 
 void checkAndReportWorkMode(void)
 {
-    u8 static mode_last = 0;
-    u8 mode = sysvar.Modes;
-    u8 index = 0;
-
-    mode = sysvar.Modes;
-    /** mechine disconnected **/
-    if (IDs_.Equipment != f_DragLala) {
-        if (mode_last != mode) {
-            mode_last = mode;
-            index = CINDEX_UNKNOW;
-            (void)reportComponentStatus(index);
-        }
-        return;
-    }
-
-    /** runing or stoped **/
-    if(sysvar.sysfang & OFF_ON) {
-        if (mode_last != mode) {
-            mode_last = mode;
-            (void)reportReportCharCmd();
-        }
-    } else {
-        if (mode_last != mode) {
-            mode_last = mode;
-            index = CINDEX_STANDBY;
-            (void)reportComponentStatus(index);
-        }
+    u8 status = 0;
+    if (checkWorkModeChange(&status) == TRUE) {
+        (void)reportComponentStatus(status);
     }
 }
 
 void checkAndAckGetCharWorkMode(void)
 {
-    u8 static mode_last = 0;
-    u8 mode = sysvar.Modes;
-    u8 index = 0;
-
-    mode = sysvar.Modes;
-    /** mechine disconnected **/
-    if (IDs_.Equipment != f_DragLala) {
-        if (mode_last != mode) {
-            mode_last = mode;
-            index = CINDEX_UNKNOW;
-            (void)getCharAckComponentStatus(index);
-        }
-        return;
-    }
-
-    /** runing or stoped **/
-    if(sysvar.sysfang & OFF_ON) {
-        if (mode_last != mode) {
-            mode_last = mode;
-            (void)getCharAckComponentStatus(index);
-        }
-    } else {
-        if (mode_last != mode) {
-            mode_last = mode;
-            index = CINDEX_STANDBY;
-            (void)getCharAckComponentStatus(index);
-        }
+    u8 status = 0;
+    if (checkWorkModeChange(&status) == TRUE) {
+        (void)getCharAckComponentStatus(status);
     }
 }
 /*********************roller***********************************************************************/
@@ -456,9 +408,11 @@ int checkRollerStatusChange(u8* status)
     if (IDs_.Equipment != f_DragLala) {
         return FALSE;
     }
+    /** 发生故障时，已经停机
     if(!(sysvar.sysfang & OFF_ON)) {
         return FALSE;
     }
+    **/
 
     if (sysvar.sysfang & MOTO_ERR_1) {
         *status = CINDEX_ROLLEROVERLOAD;
@@ -628,6 +582,12 @@ void checkAndReportChargeStatus(void)
     if (checkChargeChange(&charge_status) == TRUE) {
         /** report **/
         (void)reportComponentStatus(charge_status);
+    } else {
+        if (charge_status == CINDEX_UNCHARGED) {
+            (void)reportBatteryLevel(sysvar.BAT_soc);
+        } else {
+            reportComponentStatus(charge_status);
+        }
     }
 }
 
@@ -665,7 +625,7 @@ int checClearWaterChange(u8* status)
     if (clear_status_last != *status) {
         clear_status_last = *status;
         /** report **/
-       return TRUE;;
+        return TRUE; // !!!!!!!!!!!!!!
     }
     return FALSE;
 }
@@ -689,6 +649,7 @@ void checkAndAckGetCharClearWaterStatus(void)
     }
 }
 
+#if 0
 void checkAndReportComponentStatus(void)
 {
     static u8 fp_index = 0;
@@ -709,13 +670,6 @@ void checkAndReportComponentStatus(void)
         fp_index = 0;
     }
     fp_tab[fp_index]();
-    #if 0
-    checkAndReportWorkMode();
-    checkAndReportRollerStatus();
-    checkAndReportPumpStatus();
-    checkAndReportBatteryStatus();
-    checkAndReportChargeStatus();
-    checkAndReportClearWaterStatus();
-    #endif
 }
+#endif
 
