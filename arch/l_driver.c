@@ -283,12 +283,12 @@ void key_scan4setwifi(void)
 	msg_t msg;
     static u8 tmr_key = 0;
     static u8 key_last = 0xff;
-#if 1
+#if 0
     if (KEY1 == Bit_SET) {
         if (Mget_bit(key_last, 1) == 0) {
             tmr_key++;
-            if (tmr_key == 2) { // 去抖动时间
-                msg.msgType = CMSG_DKEY;
+            if (tmr_key >= 2) { // 去抖动时间
+                msg.msgType = CMSG_UKEY;
                 msgq_in(&g_msgq, &msg);
                 
                 tmr_key = 0;
@@ -300,10 +300,10 @@ void key_scan4setwifi(void)
     } else { /**KEY1 == Bit_RESET **/
         if (Mget_bit(key_last, 1) == 1) {
             tmr_key++;
-            if (tmr_key == 2) { // 去抖动时间
-                msg.msgType = CMSG_UKEY;
+            if (tmr_key >= 2) { // 去抖动时间
+                msg.msgType = CMSG_DKEY;
                 msgq_in(&g_msgq, &msg);
-                
+
                 tmr_key = 0;
                 Mreset_bit(key_last, 1);
             }
@@ -313,35 +313,35 @@ void key_scan4setwifi(void)
     }
 
 #else
-#if 0
-    if (Mget_bit(key_last, 1) == Bit_SET) {
-	    if (KEY1 != Bit_SET) {
+#if 1
+    if (KEY1 == Bit_SET) {
+        if (!(key_last & (1 << 1))) {
             tmr_key++;
-	        if (tmr_key == 2) { // 去抖动时间
-			    msg.msgType = CMSG_DKEY;
+            if (tmr_key >= 2) { // 去抖动时间
+                msg.msgType = CMSG_UKEY;
                 msgq_in(&g_msgq, &msg);
                 
                 tmr_key = 0;
-                Mreset_bit(key_last, 1);
-            }
-	    } else {
-	        tmr_key = 0;
-		    //Mreset_bit(key_last, 1);
-	    }
-    } else { /** Mget_bit(key_last, 1) == Bit_RESET **/
-        if (KEY1 == Bit_SET) {
-            tmr_key++;
-            if (tmr_key == 2) { // 去抖动时间
-			    msg.msgType = CMSG_UKEY;
-                msgq_in(&g_msgq, &msg);
-                
-                tmr_key = 0;
-                Mset_bit(key_last, 1);
+                key_last |= (1 << 1);
             }
         } else {
-             tmr_key = 0;
+            tmr_key = 0;
+        }
+    } else { /**KEY1 == Bit_RESET **/
+        if ((key_last & (1 << 1))) {
+            tmr_key++;
+            if (tmr_key >= 2) { // 去抖动时间
+                msg.msgType = CMSG_DKEY;
+                msgq_in(&g_msgq, &msg);
+                // MGPIO_Blink();  // ????????????????????
+                tmr_key = 0;
+                key_last &= (~(1 << 1));
+            }
+        } else {
+            tmr_key = 0;
         }
     }
+
 #endif
 #endif
 }
@@ -408,7 +408,7 @@ int checkRollerStatusChange(u8* status)
     if (IDs_.Equipment != f_DragLala) {
         return FALSE;
     }
-    /** 发生故障时，已经停机
+    /** 发生故障后，会立即停机
     if(!(sysvar.sysfang & OFF_ON)) {
         return FALSE;
     }
@@ -460,17 +460,20 @@ int checkPumpStatusChange(u8* status)
     if (IDs_.Equipment != f_DragLala) {
         return FALSE;
     }
+    /** 发生故障后，会立即停机
     if(!(sysvar.sysfang & OFF_ON)) {
         return FALSE;
     }
+    **/
 
-    if (IdSensor_fang(IdSensor_PUMP)) { // no pump
+    /** 原双引号逻辑不保存水泵状态! 改为 IDs_Judge()中取状态
+    if(IdSensor_fang(IdSensor_PUMP|IdSensor_PUMPERR)) {
         *status = CINDEX_PUMPCURRENTSMALL;
-    } else if (IdSensor_fang(IdSensor_PUMPERR) || (sysvar.sysfang & MOTO_ERR_2)) { // pump error
-        *status = CINDEX_PUMPOVERLOAD;
-    } else {  // normal
+    } else {
         *status = CINDEX_PUMPNORMAL;
     }
+    **/
+
 
     if (pump_status_last != *status) {
         pump_status_last = *status;
@@ -484,11 +487,14 @@ int checkPumpStatusChange(u8* status)
 
 void checkAndReportPumpStatus(void)
 {
-    u8 pump_status = 0;
-
-    if (checkPumpStatusChange(&pump_status) == TRUE) {
+    if (checkPumpStatusChange(&(g_componentStatus.pump)) == TRUE) {
         /** report **/
-        (void)reportComponentStatus(pump_status);
+        (void)reportComponentStatus(g_componentStatus.pump);
+    }
+
+    /** after status upload, then recoverd pump status **/
+    if(sysvar.sysfang & OFF_ON) {
+        g_componentStatus.pump = CINDEX_PUMPNORMAL;
     }
 }
 

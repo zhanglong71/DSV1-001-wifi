@@ -17,7 +17,7 @@ int f_idle(unsigned *pMsg)
     case CMSG_TMR:
         g_tick++;
         if (sysvar.sysfang & OFF_ON) {
-            cycle = 20;
+            //cycle = 20;
         } else {
             cycle = 10;
         }
@@ -108,20 +108,56 @@ int f_idle(unsigned *pMsg)
 	  //???????????????????????????????????????
         break;
     case CMSG_DKEY:
-        if (Mget_bit(g_flag, 1)) {  /** double click...  ok **/
-            Mreset_bit(g_flag, 1);
+        if (g_flag & (1 << 1)) {  /** double click...  ok **/
+            //Mreset_bit(g_flag,1);
+            g_flag &= (~(1 << 1));
             ClrTimer_irq(&g_timer[2]);
-            if (((sysvar.keyfang & KeyInstallState)&&(sysvar.keyfang & KeyLongFang))/** set mode  **/) {
-                (void)reportResetNet(0);
+   
+            switch (IDs_.Equipment){
+            case f_DragLala:
+            case f_Spray:
+            case f_Aspiration_Brush:
+            case f_Feather:
+            case f_WipeWin:
+                break;
+                
+            case f_Empty:
+                //if (((sysvar.keyfang & KeyInstallState) && (sysvar.keyfang & KeyLongFang))/** set mode  **/) {
+                if (sysvar.keyfang & KeyInstallState) {//ÉèÖÃÖÐ
+                    (void)reportResetNet(0); // !!!!!!!!!!
+                    #if 0  //?????????????????? for test only
+                    u8Data.u8Val = '1';
+                    u8FIFOin_irq(&g_uart3TxQue, &u8Data);
+                    u8Data.u8Val = '1';
+                    u8FIFOin_irq(&g_uart3TxQue, &u8Data);
+                    u8Data.u8Val = '1';
+                    u8FIFOin_irq(&g_uart3TxQue, &u8Data);
+                    #endif
+                }
+                break;
+            default:
+                break;
             }
+
+            
         } else  { /**  **/
-            Mset_bit(g_flag, 1);
+            //Mset_bit(g_flag,1);
+            g_flag |= (1 << 1);
             SetTimer_irq(&g_timer[2], TIMER_500MS, CDOUBLE_CLICK);
         }
+        #if 0  //?????????????????? for test only
+                u8Data.u8Val = 'o';
+                u8FIFOin_irq(&g_uart3TxQue, &u8Data);
+                u8Data.u8Val = 'o';
+                u8FIFOin_irq(&g_uart3TxQue, &u8Data);
+                u8Data.u8Val = 'o';
+                u8FIFOin_irq(&g_uart3TxQue, &u8Data);
+        #endif
         break;
     
     case CDOUBLE_CLICK:
-        Mreset_bit(g_flag, 1);
+        //Mreset_bit(g_flag, 1);
+        g_flag &= (~(1 << 1));
         ClrTimer_irq(&g_timer[2]);
         break;
         

@@ -283,7 +283,11 @@ int reportBatteryLevel(u8 arg)
         if (reportStatusBodyArr[idx].index == CINDEX_BATTERYLEVEL) {
             break;
         }
-    }   
+    }
+    if (idx >= MTABSIZE(reportStatusBodyArr)) {
+        return (MTABSIZE(reportStatusBodyArr));
+    }
+
     jsonTypeTx.jHead = "reportChar";
     jsonTypeTx.jBody =buf;
     jsonTypeTx.jLen = strlen(buf);
@@ -320,8 +324,6 @@ int reportBatteryLevel(u8 arg)
     u8FIFOin_irq(&g_uart3TxQue, &u8Data);
     return (TRUE);
 }
-
-
 
 /***********************************************************************
  * moto/pump/battery/clear/charge

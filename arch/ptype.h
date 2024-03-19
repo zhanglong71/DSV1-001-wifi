@@ -310,11 +310,12 @@ typedef enum {
 
 /*******************************************************************************/
 typedef struct ComponentField_s{
+    u8 mop;
 	u8 moto;
 	u8 pump;
 	u8 battery;
 	u8 charge;
-	u8 clear;
+	u8 clearWater;
 } ComponentField_t;
 
 typedef struct reportStatusBody_s{

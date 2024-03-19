@@ -340,6 +340,7 @@ void IDs_Judge() {
 									if(sysvar.sysfang & (OFF_ON)){
 										IDs_.fang |= ID_F_ERR_;
 										sysvar.t6=1000;
+                                        g_componentStatus.pump = CINDEX_PUMPCURRENTSMALL;
 									}else{
 										IDs_.State_Hall &= ~(IdSensor_PUMP|IdSensor_PUMPERR);//
 										IDs_.State_HallBRK &= ~(IdSensor_PUMP|IdSensor_PUMPERR);//

@@ -40,6 +40,7 @@ u8 g_sm_wifiInitStatus;
  * 2 --- sm_normal (initial completed)
  * 3 --- 
  **/
+ ComponentField_t g_componentStatus = {0};
 /*********************************************************************************/
  //SysTick初始化配置
  uint32_t SysTick_Config(uint64_t ticks){
@@ -85,6 +86,7 @@ int main(void){
     USART3_CFG();
     g_flag = 0;
     g_sm_wifiInitStatus = sm_none;
+    memset(&g_componentStatus, CINDEX_UNKNOW, sizeof(g_componentStatus));
     fstack_init(&g_fstack);
     func.func = f_idle;
     fstack_push(&g_fstack, &func);
