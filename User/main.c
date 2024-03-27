@@ -41,6 +41,10 @@ u8 g_sm_wifiInitStatus;
  * 3 --- 
  **/
  ComponentField_t g_componentStatus = {0};
+/** 
+ * the latest status changed and record the current status
+ * the status used only once for status upload report
+ **/
 /*********************************************************************************/
  //SysTick初始化配置
  uint32_t SysTick_Config(uint64_t ticks){

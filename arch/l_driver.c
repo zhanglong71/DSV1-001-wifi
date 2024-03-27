@@ -50,7 +50,10 @@ int sysProcess(unsigned *pMsg)
         /** do nothng **/
         //(void)reportGetCharCmd();
         break;
-        
+    case CGETCHAR_STATUS:
+        (void)checkAndAckGetCharConnectionStatus();
+        break;
+    
     case CGETCHAR_MOP:
         (void)checkAndAckGetCharWorkMode();
         break;
@@ -283,37 +286,7 @@ void key_scan4setwifi(void)
 	msg_t msg;
     static u8 tmr_key = 0;
     static u8 key_last = 0xff;
-#if 0
-    if (KEY1 == Bit_SET) {
-        if (Mget_bit(key_last, 1) == 0) {
-            tmr_key++;
-            if (tmr_key >= 2) { // 去抖动时间
-                msg.msgType = CMSG_UKEY;
-                msgq_in(&g_msgq, &msg);
-                
-                tmr_key = 0;
-                Mset_bit(key_last,1);
-            }
-        } else {
-            tmr_key = 0;
-        }
-    } else { /**KEY1 == Bit_RESET **/
-        if (Mget_bit(key_last, 1) == 1) {
-            tmr_key++;
-            if (tmr_key >= 2) { // 去抖动时间
-                msg.msgType = CMSG_DKEY;
-                msgq_in(&g_msgq, &msg);
 
-                tmr_key = 0;
-                Mreset_bit(key_last, 1);
-            }
-        } else {
-            tmr_key = 0;
-        }
-    }
-
-#else
-#if 1
     if (KEY1 == Bit_SET) {
         if (!(key_last & (1 << 1))) {
             tmr_key++;
@@ -341,11 +314,41 @@ void key_scan4setwifi(void)
             tmr_key = 0;
         }
     }
-
-#endif
-#endif
 }
 /*************************************************************************************/
+int checkConnectionStatusChange(u8* status)
+{
+    u8 static connection_last = 0;
+    /** mechine connected or not **/
+    if (IDs_.Equipment == f_DragLala) {
+        *status = CINDEX_CONNECTED;
+    } else {
+        *status = CINDEX_DISCONNECTED;
+    }
+
+    if (connection_last != *status) {
+        connection_last = *status;
+        return TRUE; 
+    }
+    return FALSE; 
+}
+/** report the status when status changed **/
+void checkAndReportConnectionStatus(void)
+{
+    u8 status = 0;
+    if (checkConnectionStatusChange(&status) == TRUE) {
+        (void)reportComponentStatus(status);
+    }
+}
+
+/** Ack for query; no matter status changed or not **/
+void checkAndAckGetCharConnectionStatus(void)
+{
+    u8 status = 0;
+    (void)checkConnectionStatusChange(&status);
+    (void)getCharAckComponentStatus(status);   
+}
+/********************* connection status **********************************************************/
 int checkWorkModeChange(u8* status)
 {
     u8 static mode_last = 0;
@@ -381,6 +384,7 @@ int checkWorkModeChange(u8* status)
     return FALSE;
 }
 
+/** report the status when status changed **/
 void checkAndReportWorkMode(void)
 {
     u8 status = 0;
@@ -389,12 +393,12 @@ void checkAndReportWorkMode(void)
     }
 }
 
+/** Ack for query; no matter status changed or not **/
 void checkAndAckGetCharWorkMode(void)
 {
     u8 status = 0;
-    if (checkWorkModeChange(&status) == TRUE) {
-        (void)getCharAckComponentStatus(status);
-    }
+    (void)checkWorkModeChange(&status);
+    (void)getCharAckComponentStatus(status);   
 }
 /*********************roller***********************************************************************/
 int checkRollerStatusChange(u8* status)
@@ -405,6 +409,7 @@ int checkRollerStatusChange(u8* status)
     if (status == NULL ) { /** something wrong**/
         return FALSE;
     }
+    *status = roller_status_last;
     if (IDs_.Equipment != f_DragLala) {
         return FALSE;
     }
@@ -438,18 +443,20 @@ void checkAndReportRollerStatus(void)
     }
 }
 
+/** Ack for query; no matter status changed or not **/
 void checkAndAckGetCharRollerStatus(void)
 {
     u8 roller_status = 0;
 
-    if (checkRollerStatusChange(&roller_status) == TRUE) {
-        /** report **/
-        (void)getCharAckComponentStatus(roller_status);
-    }
+    (void)checkRollerStatusChange(&roller_status);
+    (void)getCharAckComponentStatus(roller_status);
 }
 
-
 /************************** pump *****************************************************************/
+/**
+ * pump fault occured, then the next action done and IdSensor_fang(IdSensor_PUMP|IdSensor_PUMPERR) status lost
+ * so get the status in IDs_Judge() specially and trans
+ **/
 int checkPumpStatusChange(u8* status)
 {
     u8 static pump_status_last = 0;
@@ -457,6 +464,7 @@ int checkPumpStatusChange(u8* status)
     if (status == NULL) {
         return FALSE;
     }
+    *status = pump_status_last;
     if (IDs_.Equipment != f_DragLala) {
         return FALSE;
     }
@@ -466,7 +474,7 @@ int checkPumpStatusChange(u8* status)
     }
     **/
 
-    /** 原双引号逻辑不保存水泵状态! 改为 IDs_Judge()中取状态
+    /** 原双引号逻辑不保存水泵状态! 改为 IDs_Judge()中取状态; 再传入此函数进行处理
     if(IdSensor_fang(IdSensor_PUMP|IdSensor_PUMPERR)) {
         *status = CINDEX_PUMPCURRENTSMALL;
     } else {
@@ -485,6 +493,9 @@ int checkPumpStatusChange(u8* status)
 
 }
 
+/**
+ * the g_componentStatus.pump state get from IDs_Judge() only
+ **/
 void checkAndReportPumpStatus(void)
 {
     if (checkPumpStatusChange(&(g_componentStatus.pump)) == TRUE) {
@@ -498,14 +509,12 @@ void checkAndReportPumpStatus(void)
     }
 }
 
+/** Ack for query; no matter status changed or not **/
 void checkAndAckGetCharPumpStatus(void)
 {
     u8 pump_status = 0;
-
-    if (checkPumpStatusChange(&pump_status) == TRUE) {
-        /** report **/
-        (void)getCharAckComponentStatus(pump_status);
-    }
+    (void)checkPumpStatusChange(&g_componentStatus.pump);
+    (void)getCharAckComponentStatus(g_componentStatus.pump);
 }
 /**************************************************************************************************/
 int checkBatteryChange(u8* status)
@@ -539,14 +548,12 @@ void checkAndReportBatteryStatus(void)
     }
 }
 
+/** Ack for query; no matter status changed or not **/
 void checkAndAckGetCharBatteryStatus(void)
 {
     u8 battery_status = 0;
-    
-    if (checkBatteryChange(&battery_status) == TRUE) {
-        /** report **/
-        (void)getCharAckComponentStatus(battery_status);
-    }
+    (void)checkBatteryChange(&battery_status);
+    (void)getCharAckComponentStatus(battery_status);
 }
 
 /**************************************************************************************************/
@@ -589,24 +596,30 @@ void checkAndReportChargeStatus(void)
         /** report **/
         (void)reportComponentStatus(charge_status);
     } else {
+        #if 0
+            (void)reportBatteryLevel(sysvar.BAT_soc);
+        #else
+        /** 充电时，电量比率会超过 100%!  **/
         if (charge_status == CINDEX_UNCHARGED) {
             (void)reportBatteryLevel(sysvar.BAT_soc);
         } else {
             reportComponentStatus(charge_status);
         }
+        #endif
     }
 }
 
+/** Ack for query; no matter status changed or not **/
 void checkAndAckGetCharChargeStatus(void)
 {
     u8 charge_status = 0;
-
-    if (checkChargeChange(&charge_status) == TRUE) {
-        /** report **/
-        (void)getCharAckComponentStatus(charge_status);
-    }
+    (void)checkChargeChange(&charge_status);
+    (void)getCharAckComponentStatus(charge_status);
 }
 /**************************************************************************************************/
+/**
+ * latest clearwater status; ...
+ **/
 int checClearWaterChange(u8* status)
 {
     u8 static clear_status_last = 0;
@@ -614,7 +627,7 @@ int checClearWaterChange(u8* status)
     if (status == NULL) {
         return FALSE;
     }
-    
+    *status = clear_status_last;
     if (IDs_.Equipment != f_DragLala) {
         return FALSE;
     }
@@ -646,15 +659,14 @@ void checkAndReportClearWaterStatus(void)
     }
 }
 
+/** Ack for query; no matter status changed or not **/
 void checkAndAckGetCharClearWaterStatus(void)
 {
     u8 clear_status = 0;
-    if (checClearWaterChange(&clear_status) == TRUE) {
-        /** report **/
-        (void)getCharAckComponentStatus(clear_status);
-    }
+    (void)checClearWaterChange(&clear_status);
+    (void)getCharAckComponentStatus(clear_status);
 }
-
+/**************************************************************************************************/
 #if 0
 void checkAndReportComponentStatus(void)
 {

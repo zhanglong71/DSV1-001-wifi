@@ -89,7 +89,7 @@
 #define	MisGetCharChargeStatus(idx, len, body)  (MisGetChar(idx) && ((len) == 6) && (strnstr((body), "charge", len) != NULL))    /** the index in table commandKeyArr **/
 #define	MisGetCharNetInfoStatus(idx, len, body)  (MisGetChar(idx) && ((len) == 7) && (strnstr((body), "netInfo", len) != NULL))    /** the index in table commandKeyArr **/
 #define	MisGetCharUpdateStatus(idx, len, body)  (MisGetChar(idx) && ((len) == 7) && (strnstr((body), "update", len) != NULL))    /** the index in table commandKeyArr **/
-#define	MisGetCharStatus(idx, len, body)  (MisGetChar(idx) && ((len) == 7) && (strnstr((body), "status", len) != NULL))    /** the index in table commandKeyArr **/
+#define	MisGetCharStatus(idx, len, body)  (MisGetChar(idx) && ((len) == 6) && (strnstr((body), "status", len) != NULL))    /** the index in table commandKeyArr **/
 
 #define	MisScanWifi(idx)  ((idx) == 5)       /** the index in table commandKeyArr **/
 #define	MisScanWifiRespFail(idx, len, body) (MisScanWifi(idx) && (MisRespFail(len, body)))

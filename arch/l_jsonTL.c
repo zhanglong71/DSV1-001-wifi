@@ -157,6 +157,9 @@ const static reportStatusBody_t reportStatusBodyArr[] = {
     { CINDEX_PUMPCURRENTSMALL,   "{\"mop\":{\"pump\":\"pumpCurrentSmall\"}}"},          // 水泵电流过小 pumpCurrentToosmall
     { CINDEX_MOTOROVERLOAD,      "{\"mop\":{\"roller\":\"rollerError\"}}"},                // 电机故障
     #else
+    { CINDEX_DISCONNECTED,        "{\"status\":{\"status\":0}}"},             // off line
+    { CINDEX_CONNECTED,           "{\"status\":{\"status\":1}}"},             // on line
+
     { CINDEX_UNKNOW,              "{\"mop\":{\"status\":0}}"},             // unknow 未知状态(主机断开及其它)
     { CINDEX_STANDBY,             "{\"mop\":{\"status\":1}}"},             // standby 待机
     { CINDEX_STANDARD,            "{\"mop\":{\"status\":2}}"},                   // standard 标准模式
@@ -846,8 +849,8 @@ objType_t sm_receiveData(u8 *data)
                 msgq_in_irq(&g_msgq, &msg);
                 return obj_none;
 
-            } else if(MisGetCharMopStatus(s_keyIdx, s_bodyLen, data)) {
-                msg.msgType = CGETCHAR_MOP;
+            } else if(MisGetCharStatus(s_keyIdx, s_bodyLen, data)) {
+                msg.msgType = CGETCHAR_STATUS;
                 msgq_in_irq(&g_msgq, &msg);
                 return obj_none;
             } else if(MisGetCharRollerStatus(s_keyIdx, s_bodyLen, data)) {

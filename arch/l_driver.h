@@ -11,5 +11,6 @@ void checkAndAckGetCharPumpStatus(void);
 void checkAndAckGetCharBatteryStatus(void);
 void checkAndAckGetCharChargeStatus(void);
 void checkAndAckGetCharClearWaterStatus(void);
+void checkAndAckGetCharConnectionStatus(void);
 
 #endif

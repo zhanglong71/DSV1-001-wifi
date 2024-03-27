@@ -45,32 +45,36 @@ int f_idle(unsigned *pMsg)
       /******************************************************************************************
        * 工作状态上报
        ******************************************************************************************/
-      if ((g_tick % cycle) == 1) {  /** updata battery level every CYCLE sec **/
+      if ((g_tick % cycle) == 1) {  /** updata every CYCLE sec **/
           checkAndReportWorkMode();
       }
       /******************************************************************************************
        * 滚筒状态
        ******************************************************************************************/
-      if ((g_tick % cycle) == 2) {  /** updata battery level every CYCLE sec **/
+      if ((g_tick % cycle) == 2) {  /** updata every CYCLE sec **/
           checkAndReportRollerStatus();
       }
       /******************************************************************************************
        * 水泵状态
        ******************************************************************************************/
-      if ((g_tick % cycle) == 3) {  /** updata battery level every CYCLE sec **/
+      if ((g_tick % cycle) == 3) {  /** updata every CYCLE sec **/
           checkAndReportPumpStatus();
       }
       /******************************************************************************************
        * 电池状态
        ******************************************************************************************/
-      if ((g_tick % cycle) == 4) {  /** updata battery level every CYCLE sec **/
+      if ((g_tick % cycle) == 4) {  /** updata every CYCLE sec **/
           checkAndReportBatteryStatus();
       }
       /******************************************************************************************
        * 清水状态
        ******************************************************************************************/
-      if ((g_tick % cycle) == 5) {  /** updata battery level every CYCLE sec **/
+      if ((g_tick % cycle) == 5) {  /** updata every CYCLE sec **/
           checkAndReportClearWaterStatus();
+      }
+
+      if ((g_tick % cycle) == 6) {  /** updata every CYCLE sec **/
+          checkAndReportConnectionStatus();
       }
       //???????????????????????????????????????
       #if 0
@@ -125,34 +129,16 @@ int f_idle(unsigned *pMsg)
                 //if (((sysvar.keyfang & KeyInstallState) && (sysvar.keyfang & KeyLongFang))/** set mode  **/) {
                 if (sysvar.keyfang & KeyInstallState) {//设置中
                     (void)reportResetNet(0); // !!!!!!!!!!
-                    #if 0  //?????????????????? for test only
-                    u8Data.u8Val = '1';
-                    u8FIFOin_irq(&g_uart3TxQue, &u8Data);
-                    u8Data.u8Val = '1';
-                    u8FIFOin_irq(&g_uart3TxQue, &u8Data);
-                    u8Data.u8Val = '1';
-                    u8FIFOin_irq(&g_uart3TxQue, &u8Data);
-                    #endif
                 }
                 break;
             default:
                 break;
             }
-
-            
         } else  { /**  **/
             //Mset_bit(g_flag,1);
             g_flag |= (1 << 1);
             SetTimer_irq(&g_timer[2], TIMER_500MS, CDOUBLE_CLICK);
         }
-        #if 0  //?????????????????? for test only
-                u8Data.u8Val = 'o';
-                u8FIFOin_irq(&g_uart3TxQue, &u8Data);
-                u8Data.u8Val = 'o';
-                u8FIFOin_irq(&g_uart3TxQue, &u8Data);
-                u8Data.u8Val = 'o';
-                u8FIFOin_irq(&g_uart3TxQue, &u8Data);
-        #endif
         break;
     
     case CDOUBLE_CLICK:
