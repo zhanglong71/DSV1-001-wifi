@@ -11,7 +11,7 @@
 #define	STACKSIZE	8
 #define	QUEUESIZE	8
 
-#define U8FIFOSIZE   64
+#define U8FIFOSIZE   128
 //#define	OK	0
 //#define	ERROR	-1
 
@@ -22,6 +22,9 @@
 #define CSEND_BUF_SIZE	16	//16	 //缓冲区大小
 
 #define TIMER_NUM	3       /** 定时器个数 **/
+
+#define	CMAX1_COUPLE		6    // the max number of kv couple in one object between master and slave (uart1 communicate)
+
 /** 
  * 0 - 计时计数
  * 1 - 开/闭锁
@@ -78,6 +81,8 @@
 
 #define CINDEX_CONNECTED              (20)
 #define CINDEX_DISCONNECTED           (21)
+#define CINDEX_NETINFO                (22)
+#define CINDEX_UPDATE                (23)
 
 #define CINDEX_TANKINPLACE            (31)
 #define CINDEX_TANKNOTINPLACE         (32)

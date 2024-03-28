@@ -231,7 +231,7 @@ jsonTL_t commandHeadArr[] = {
  * example:
  * {key1:value1, key2:value2, ... ,keyn:valuen}
  **/
-unsigned char JsonParseL0(unsigned char* jsonstrbuf, JsonArr* jsonstcarr)
+unsigned char JsonParse_L0(unsigned char* jsonstrbuf, JsonArr* jsonstcarr)
 {
     u8 j_u8,k_u8,i_u8 = 0;
     char *p[12];
@@ -283,6 +283,8 @@ unsigned char JsonParseL0(unsigned char* jsonstrbuf, JsonArr* jsonstcarr)
  * 2.then ":"
  * 3.next json body L0
  **/
+ 
+ #if 1
 unsigned char JsonParseL1E0(unsigned char* str, JsonArr* jsonstcarr)
 {
     unsigned char* p = NULL;
@@ -304,7 +306,7 @@ unsigned char JsonParseL1E0(unsigned char* str, JsonArr* jsonstcarr)
         return NULL;
     }
     p++;
-    return JsonParseL0(p, jsonstcarr);
+    return JsonParse_L0(p, jsonstcarr);
 }
 
 /**
@@ -371,7 +373,7 @@ unsigned char JsonParseL1BatchItem(unsigned char* str, JsonArr* jsonstcarr)
     
     #undef CTABSIZE_TMPKV
     #undef CTABSIZE_TMPSTR
-    return JsonParseL0(kv, jsonstcarr);
+    return JsonParse_L0(kv, jsonstcarr);
 }
 
 /**
@@ -438,3 +440,5 @@ unsigned char JsonParse(unsigned char* str, JsonArr* jsonstcarr)
     
     return JsonParseL1E0(str, jsonstcarr);
 }
+#endif
+

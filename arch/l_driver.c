@@ -5,6 +5,7 @@
 #include "global.h"
 #include "arch.h"
 #include <string.h>
+#include <stdlib.h>
 
 #include "main.h"
 #include "l_driver.h"
@@ -12,10 +13,13 @@
 
 int sysProcess(unsigned *pMsg)
 {
+    func_t func;
+    msg_t msg;
     int iRet = TRUE;
     u8Data_t u8Data;
     u8 buf[U8FIFOSIZE];
-
+    kv_t KVarr[3];
+    int flag = 0;
     //int i = 0;
     u8 len = 0;
     switch(((msg_t *)pMsg)->msgType)
@@ -23,22 +27,62 @@ int sysProcess(unsigned *pMsg)
     case CMSG_UART3RX:
         if(u8FIFOisEmpty(&g_uart3RxQue) != TRUE) {
             /** do something to uart3 data **/
-            //???????????????????????????????????????
-            #if 1
-            u8 len = 0;
             u8Data_t u8Data;
             objType_t objtype = sm_receiveData(buf);
-            if ((objtype == obj_key) || (objtype == obj_len) || (objtype == obj_body)) {
-                #if 0
-            	len = strlen(buf);
-                for(int i = 0; i < len; i++) {
-                    u8Data.u8Val = buf[i];
-                    u8FIFOin_irq(&g_uart3TxQue, &u8Data);
+            if (objtype == obj_none) {
+                /** nothing **/
+            } else if ((objtype == obj_key) || (objtype == obj_len) || (objtype == obj_body)) {
+                /** do something **/
+                /** what ? **/
+            } else if (objtype == obj_SSID) {
+                memset(KVarr, 0, sizeof(KVarr));
+                JsonParseL0(buf, KVarr);
+                for (u8 i = 0; ((i < MTABSIZE(KVarr)) && (KVarr[i].KVIndex > 0)); i++) {
+                    if (strstr(KVarr[i].key, "status") && strstr(KVarr[i].value, "1")) {
+                        flag |= (1 << 1);
+                    }
+                    if (strstr(KVarr[i].key, "ssid")) {
+                        flag |= (1 << 2);
+                        strncpy(g_netInfo.ssid, KVarr[i].value, sizeof(g_netInfo.ssid));
+                    }
                 }
-                #endif
+                if ((flag & 0x60) == 0x60) {
+                    g_netInfo.flag |= (1 << 0);
+                }
+            } else if (objtype == obj_IP) {
+                memset(KVarr, 0, sizeof(KVarr));
+                JsonParseL0(buf, KVarr);
+                for (u8 i = 0; ((i < MTABSIZE(KVarr)) && (KVarr[i].KVIndex > 0)); i++) {
+                    if (strstr(KVarr[i].key, "status") && strstr(KVarr[i].value, "1")) {
+                        flag |= (1 << 1);
+                    }
+                    if (strstr(KVarr[i].key, "ip")) {
+                        flag |= (1 << 2);
+                        strncpy(g_netInfo.ip, KVarr[i].value, sizeof(g_netInfo.ip));
+                    }
+                }
+                if ((flag & 0x60) == 0x60) {
+                    g_netInfo.flag |= (1 << 1);
+                }
+            } else if (objtype == obj_MAC) {
+                memset(KVarr, 0, sizeof(KVarr));
+                JsonParseL0(buf, KVarr);
+                for (u8 i = 0; ((i < MTABSIZE(KVarr)) && (KVarr[i].KVIndex > 0)); i++) {
+                    if (strstr(KVarr[i].key, "status") && strstr(KVarr[i].value, "1")) {
+                        flag |= (1 << 1);
+                    }
+                    if (strstr(KVarr[i].key, "mac")) {
+                        flag |= (1 << 2);
+                        strncpy(g_netInfo.mac, KVarr[i].value, sizeof(g_netInfo.mac));
+                    }
+                }
+                if ((flag & 0x60) == 0x60) {
+                    g_netInfo.flag |= (1 << 2);
+                }
+            } else if (objtype == obj_RSSI) {
+                g_netInfo.rssi = atoi(buf);
+                g_netInfo.flag |= (1 << 3);
             }
-            #endif
-            //???????????????????????????????????????
         }
 
         break;
@@ -73,13 +117,17 @@ int sysProcess(unsigned *pMsg)
         (void)checkAndAckGetCharChargeStatus();
         break;
     case CGETCHAR_NETINFO:
+        checkAndAckGetCharNetInfo();
         break;
     case CGETCHAR_UPDATE:
+        checkAndAckGetCharUpdate();
         break;
-
-   
+    case CPUT_SYNC:
+        reportAckPutSync();
+        break;
+        
     case CPUT_CHAR:
-			(void)JsonParse(NULL, NULL);
+			// (void)JsonParse(NULL, NULL);
          #if 1  //?????????????????? for test only
              len = strlen(buf);
              for(int i = 0; i < len; i++) {
@@ -114,41 +162,24 @@ int sysProcess(unsigned *pMsg)
         u8FIFOin_irq(&g_uart3TxQue, &u8Data);
         #endif
         break;
-
-    case CWIFI_STATUS:
-        g_sm_wifiInitStatus = sm_wifiInitComplete;
+    case CDISCONN_CLOUD:
+        g_sm_wifiInitStatus = sm_wifiDisconnected;
+        break;
+        
+    // case CWIFI_STATUS:
+    case CCONN_CLOUD:
+        g_sm_wifiInitStatus = sm_wifiConnected;
         /** do what ? **/
-#if 0  //?????????????????? for test only
-        u8Data.u8Val = 'w';
-        u8FIFOin_irq(&g_uart3TxQue, &u8Data);
-        u8Data.u8Val = 'i';
-        u8FIFOin_irq(&g_uart3TxQue, &u8Data);
-        u8Data.u8Val = 'f';
-        u8FIFOin_irq(&g_uart3TxQue, &u8Data);
-        u8Data.u8Val = 'i';
-        u8FIFOin_irq(&g_uart3TxQue, &u8Data);
-        u8Data.u8Val = 'S';
-        u8FIFOin_irq(&g_uart3TxQue, &u8Data);
-        u8Data.u8Val = 't';
-        u8FIFOin_irq(&g_uart3TxQue, &u8Data);
-        u8Data.u8Val = 'a';
-        u8FIFOin_irq(&g_uart3TxQue, &u8Data);
-        u8Data.u8Val = 't';
-        u8FIFOin_irq(&g_uart3TxQue, &u8Data);
-        u8Data.u8Val = 'u';
-        u8FIFOin_irq(&g_uart3TxQue, &u8Data);
-        u8Data.u8Val = 's';
-        u8FIFOin_irq(&g_uart3TxQue, &u8Data);
-        u8Data.u8Val = ':';
-        u8FIFOin_irq(&g_uart3TxQue, &u8Data);
-
-        len = strlen(buf);
-        for(int i = 0; i < len; i++) {
-            u8Data.u8Val = buf[i];
-            u8FIFOin_irq(&g_uart3TxQue, &u8Data);
-        }
-#endif
-        break;    
+        break;
+        
+    case CCONN_ROUTE:   /** connect route then get net info  **/ 
+        fstack_init(&g_fstack);
+        func.func = f_getNetInfo;
+        fstack_push(&g_fstack, &func);
+        
+        msg.msgType = CMSG_INIT;
+        msgq_in_irq(&g_msgq, &msg);
+        break;
         
     case CHEART_BEAT:
         (void)reportHeartbeat(NULL);
@@ -666,6 +697,27 @@ void checkAndAckGetCharClearWaterStatus(void)
     (void)checClearWaterChange(&clear_status);
     (void)getCharAckComponentStatus(clear_status);
 }
+/**************************************************************************************************/
+/** Ack for query; no matter status changed or not **/
+void checkAndAckGetCharNetInfo(void)
+{
+    reportgetCharNetInfo(&g_netInfo);
+}
+
+void netInfoData_init(void)
+{
+    g_netInfo.flag = 0;
+    g_netInfo.rssi = 0;
+    strcpy(g_netInfo.ssid, "ssid");
+    strcpy(g_netInfo.ip, "0.0.0.0");
+    strcpy(g_netInfo.mac, "0:0:0:0:0:0");
+}
+
+void checkAndAckGetCharUpdate(void)
+{
+    (void)getCharAckComponentStatus(CINDEX_UPDATE);
+}
+
 /**************************************************************************************************/
 #if 0
 void checkAndReportComponentStatus(void)

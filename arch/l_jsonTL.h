@@ -10,7 +10,7 @@ jsonTL_t* getHeartbeat(void);
 jsonTL_t* getService(u8 idx);
 jsonTL_t* getConnectWifi(u8 idx);
 
-void sm_sendData(jsonTL_t* p);
+RetStatus sm_sendData(jsonTL_t* p);
 void sm_sendData_once(jsonTL_t* jp);
 objType_t sm_receiveData(u8 *data);
 
@@ -24,13 +24,24 @@ int reportDevInfo(unsigned *arg);
 int reportService(unsigned *arg);
 int reportGetCharCmd(void);
 int reportReportCharCmd(void);
-int reportResetNet(u8 arg);
+int reportResetNet(int arg);
 int reportScanWifi(void *arg);
 int reportConnectWifi(void *arg);
 int reportBatteryLevel(u8 arg);
 int reportComponentStatus(u8 statusIndex);
+void reportAckPutSync(void);
 
 int getCharAckComponentStatus(u8 statusIndex);
+
+
+int doNothing(void);
+int reportgetSsid(void);
+int reportgetIp(void);
+int reportgetMac(void);
+int reportgetRssi(void);
+int reportgetCharNetInfo(NetInfo_t* netInfo);
+
+char JsonParseL0(char* jsonstrbuf, kv_t* jsonstcarr);
 
 // void reportTest(void);
 

@@ -10,10 +10,9 @@
 #include "main.h"
 
 /**********************************************************************************************/
-int doNothing(unsigned *arg)
+int doNothing(void)
 {
-    (void)arg;
-    return 0;
+    return (TRUE);
 }
 
 int constructGetCharCmd(u8 status)
@@ -47,7 +46,7 @@ int reportService(unsigned *arg)
     return (TRUE);
 }
 
-int reportResetNet(u8 idx)
+int reportResetNet(int idx)
 {
     static jsonTL_t resetNetArr[] = {
         { "resetNet", 2,"AP"},   /** reset net and config net with AP **/
@@ -57,6 +56,66 @@ int reportResetNet(u8 idx)
         return (FALSE);
     }
     sm_sendData_once(&(resetNetArr[idx]));
+
+    return (TRUE);
+}
+
+int reportgetSsid(void)
+{
+    u8Data_t u8Data;
+    u8 buf[] = "getSsid,0\n";
+    for (int i = 0; i < strlen(buf); i++) {
+        u8Data.u8Val = buf[i];
+        u8FIFOin_irq(&g_uart3TxQue, &u8Data);
+    }
+
+    return (TRUE);
+}
+
+int reportgetIp(void)
+{
+    u8Data_t u8Data;
+    u8 buf[] = "getIp,0\n";
+    for (int i = 0; i < strlen(buf); i++) {
+        u8Data.u8Val = buf[i];
+        u8FIFOin_irq(&g_uart3TxQue, &u8Data);
+    }
+
+    return (TRUE);
+}
+
+int reportgetMac(void)
+{
+    u8Data_t u8Data;
+    u8 buf[] = "getMac,0\n";
+    for (int i = 0; i < strlen(buf); i++) {
+        u8Data.u8Val = buf[i];
+        u8FIFOin_irq(&g_uart3TxQue, &u8Data);
+    }
+
+    return (TRUE);
+}
+
+int reportgetRssi(void)
+{
+    u8Data_t u8Data;
+    u8 buf[] = "getRssi,0\n";
+    for (int i = 0; i < strlen(buf); i++) {
+        u8Data.u8Val = buf[i];
+        u8FIFOin_irq(&g_uart3TxQue, &u8Data);
+    }
+
+    return (TRUE);
+}
+
+int reportgetWifiStatus(void)
+{
+    u8Data_t u8Data;
+    u8 buf[] = "getWifiStatus,0\n";
+    for (int i = 0; i < strlen(buf); i++) {
+        u8Data.u8Val = buf[i];
+        u8FIFOin_irq(&g_uart3TxQue, &u8Data);
+    }
 
     return (TRUE);
 }
@@ -73,6 +132,17 @@ int reportScanWifi(void *arg)
 
     return (TRUE);
 }
+
+void reportAckPutSync(void)
+{
+    u8Data_t u8Data;
+    u8 buf[] = "putSync,0\n";
+    for (int i = 0; i < strlen(buf); i++) {
+        u8Data.u8Val = buf[i];
+        u8FIFOin_irq(&g_uart3TxQue, &u8Data);
+    }
+}
+
 
 #if 0
 int reportConnectWifi(void *arg)
@@ -185,6 +255,9 @@ const static reportStatusBody_t reportStatusBodyArr[] = {
     { CINDEX_CHARGING,            "{\"charge\":{\"status\":2}}"},         // 正在充电
     { CINDEX_CHARGECOMPLETE,      "{\"charge\":{\"status\":3}}"},         // 充电完成(区别不充电场景)
     { CINDEX_CHARGEFAULT,         "{\"charge\":{\"status\":4}}"},         // 充电故障
+    
+    { CINDEX_NETINFO,             "{\"netInfo\":{\"IP\":%s,\"RSSI\":%d,\"SSID\":%s}}"},         // 充电故障
+    { CINDEX_UPDATE,              "update"},         // 充电故障
     #endif
 };
 
@@ -237,7 +310,7 @@ int reportGetCharCmd(void)
 }
 #endif
 /**
- * ?ϱ????? 
+ * ?ϱ?????
  * ?????? getChar/reportChar
  **/
 #if 0
@@ -328,6 +401,64 @@ int reportBatteryLevel(u8 arg)
     return (TRUE);
 }
 
+int reportgetCharNetInfo(NetInfo_t* netInfo)
+{
+    jsonTL_t jsonTypeTx;
+    u8 buf[128]; 
+    u8 len = 0;
+    u8Data_t u8Data;
+    u8 idx = 0;
+
+    if (netInfo == NULL) {
+        return (FALSE);
+    }
+
+    for (idx = 0; idx < MTABSIZE(reportStatusBodyArr); idx++) {
+        if (reportStatusBodyArr[idx].index == CINDEX_NETINFO) {
+            break;
+        }
+    }
+    if (idx >= MTABSIZE(reportStatusBodyArr)) {
+        return (MTABSIZE(reportStatusBodyArr));
+    }
+
+    jsonTypeTx.jHead = "getChar";
+    jsonTypeTx.jBody = buf;
+    jsonTypeTx.jLen = strlen(buf);
+    
+    /** hhhhhhhhh head **/
+    len = strlen(jsonTypeTx.jHead);
+    for (int i = 0; i < len; i++) {
+        u8Data.u8Val = jsonTypeTx.jHead[i];
+        u8FIFOin_irq(&g_uart3TxQue, &u8Data);
+    }
+    u8Data.u8Val = ',';
+    u8FIFOin_irq(&g_uart3TxQue, &u8Data); 
+    
+    /** lllllllll length **/
+    sprintf(buf, reportStatusBodyArr[idx].body, netInfo->ip, netInfo->rssi, netInfo->ssid);
+    len = strlen(buf);
+    if (sprintf(buf, "%d", len)) {
+        for (int i = 0; i < strlen(buf); i++) {
+            u8Data.u8Val = buf[i];
+            u8FIFOin_irq(&g_uart3TxQue, &u8Data);
+        }
+    }
+    u8Data.u8Val = ',';
+    u8FIFOin_irq(&g_uart3TxQue, &u8Data);
+    
+    /** bbbbbbbbb body **/
+    sprintf(buf, reportStatusBodyArr[idx].body, netInfo->ip, netInfo->rssi, netInfo->ssid);
+    for (int i = 0; i < strlen(buf); i++) {
+        u8Data.u8Val = buf[i];
+        u8FIFOin_irq(&g_uart3TxQue, &u8Data);
+    }
+
+    u8Data.u8Val = '\n';
+    u8FIFOin_irq(&g_uart3TxQue, &u8Data);
+    return (TRUE);
+}
+
 /***********************************************************************
  * moto/pump/battery/clear/charge
  ***********************************************************************/
@@ -377,6 +508,13 @@ int getCharAckComponentStatus(u8 statusIndex)
     return 0;
 }
 
+int readUIDfromMcu(char* uid)
+{
+    __IO unsigned char* Address = (__IO unsigned char*)0x1ffff7e8;
+    for (int i = 0; i < 12; i++) {
+        uid[i] = (*(__IO unsigned char*) (Address + i));
+    }
+}
 /*********************************************************************/
 jsonTL_t* getDevInfo(u8 idx)
 {
@@ -578,9 +716,11 @@ void sm_sendData_once(jsonTL_t* jp)
  * sm_step: send data body(< 60 byte) again and again(CMSG_UART3TX)
  * sm_end: send over
  *
+ * return 
+ *
  * note: send data the length of g_uart3TxQue buf
  **/
-void sm_sendData(jsonTL_t* jp)
+RetStatus sm_sendData(jsonTL_t* jp)
 {
     static smStatus_t s_smStatus = sm_init;
     static jsonTL_t* p = NULL;
@@ -591,7 +731,7 @@ void sm_sendData(jsonTL_t* jp)
 
     if (s_smStatus == sm_init) {   /** first enter the send process **/
         if (jp == NULL) {
-            return;
+            return PERROR;
         }
         s_smStatus = sm_step;
         p = jp;
@@ -625,7 +765,7 @@ void sm_sendData(jsonTL_t* jp)
             u8Data.u8Val = '\n';
             u8FIFOin_irq(&g_uart3TxQue, &u8Data);
             s_smStatus = sm_init;
-            return;
+            return POK;
         }
         /** bbbbbbbbb body **/
         for (int i = 0; ((i < len) && (i < (Mu8FIFO_bufLen(&g_uart3TxQue) - 32))); i++, total++) {
@@ -636,7 +776,7 @@ void sm_sendData(jsonTL_t* jp)
         /** body **/
         if (p == NULL) {
             s_smStatus = sm_end;
-            return; 
+            return PERROR; 
         }
         len = strlen(p->jBody);
         for (int i = 0; ((total < len) && (i < Mu8FIFO_bufLen(&g_uart3TxQue) - 1)); i++, total++) {
@@ -649,6 +789,7 @@ void sm_sendData(jsonTL_t* jp)
             u8FIFOin_irq(&g_uart3TxQue, &u8Data);
             s_smStatus = sm_end;
         }
+        return POK;
     } else if (s_smStatus == sm_end) {   /** transmit over **/
         s_smStatus = sm_init;
         p = NULL;
@@ -656,6 +797,8 @@ void sm_sendData(jsonTL_t* jp)
         s_smStatus = sm_init;
         p = NULL;
     }
+    
+    return POK;
 }
 
 #if 0
@@ -704,6 +847,11 @@ const jsonTL_t commandKeyArr[] = {
     {"putWifiStatus", 0, NULL, NULL},   /** the command description !!! **/
     {"getWifiStatus", 0, NULL, NULL},   /** the command description !!! **/
     {"resetNet", 0, NULL, NULL},        /** reset net and configure net !!! **/
+    {"getSsid", 0, NULL, NULL},         /** netInfo ssid !!! **/
+    {"getIp", 0, NULL, NULL},           /** netInfo ip !!! **/
+    {"getMac", 0, NULL, NULL},          /** netInfo mac !!! **/
+    {"getRssi", 0, NULL, NULL},         /** netInfo rssi !!! **/
+    {"putSync", 0, NULL, NULL},          /** netInfo mac !!! **/
     // {"\xa5\x5a\x01\x10\x00\x06\x00\x0A\x00\x02", 0, NULL, NULL},
     // {"\"getDevInfo\"", 0},   /**  **/
     // {"\"heartbeat\"", 0},    /** 下发心跳！长度为0 **/
@@ -745,7 +893,7 @@ objType_t sm_receiveData(u8 *data)
     (void)u8FIFO_last(&g_uart3RxQue, &chData);
 
     if (s_smStatus == sm_init) {   /** identifing key **/
-        if (chData != ',') {
+        if (chData != ',') { /** identify the string until the ',' **/
             offset = 0;
             return obj_none;
         }
@@ -887,8 +1035,17 @@ objType_t sm_receiveData(u8 *data)
                 msgq_in_irq(&g_msgq, &msg);
                 return obj_none;
             } else if(MisgetWifiStatus(s_keyIdx)) {
-                msg.msgType = CWIFI_STATUS;
-                msgq_in_irq(&g_msgq, &msg);
+                i = atoi(data);
+                if(MisgetWifiStatusExpect(s_keyIdx, s_bodyLen, i, 1)) {
+                    msg.msgType = CCONN_CLOUD;
+                    msgq_in_irq(&g_msgq, &msg);
+                } else if(MisgetWifiStatusExpect(s_keyIdx, s_bodyLen, i, 8)) {
+                    msg.msgType = CCONN_ROUTE;
+                    msgq_in_irq(&g_msgq, &msg);
+                } else {
+                    msg.msgType = CDISCONN_CLOUD;
+                    msgq_in_irq(&g_msgq, &msg);
+                }
                 return obj_none;
             } else if(MisScanWifi(s_keyIdx)) {
                 /** need one global variety store the rssi **/
@@ -911,7 +1068,26 @@ objType_t sm_receiveData(u8 *data)
                     msgq_in_irq(&g_msgq, &msg);
                     return obj_none;
                 }
+            } else if (MisGetSsid(s_keyIdx)) {
+                //if (strlen(data) == s_bodyLen) {
+                //}
+                return obj_SSID;
+            } else if (MisGetIp(s_keyIdx)) {
+                return obj_IP;
+            } else if (MisGetMac(s_keyIdx)) {
+                return obj_MAC;
+            } else if (MisGetRssi(s_keyIdx)) {
+                if (!(MisGetRssiFail(s_keyIdx, s_bodyLen, data))) {
+                    return obj_RSSI;
+                } else { 
+                    // return obj_RSSI;
+                }
+            } else if (MisPutSync(s_keyIdx)) {
+                msg.msgType = CPUT_SYNC;
+                msgq_in_irq(&g_msgq, &msg);
+                return obj_none;
             }
+            
             return obj_body;
         }
 
@@ -962,4 +1138,46 @@ void CmdProcess(u8* CommId)
     }
 }
 #endif
+/*******************************************************************************
+ * prase json body(JsonParseL0)
+ * 
+ * example:
+ * {key1:value1, key2:value2, ... ,keyn:valuen}
+ *******************************************************************************/
+char JsonParseL0(char* from, kv_t* to)
+{
+    u8 j_u8,k_u8,i_u8 = 0;
+    char *p[CMAX1_COUPLE * 2];
+    char *pChar = (char *)from;
+    to[0].KVIndex = 0;
+
+    /** 1. simily as '{ ... }'! **/
+    if((from[0] != '{') || (from[strlen(from) - 1] != '}')) {
+        return(0);
+    }
+
+    from[strlen(from) - 1] = '\0';            /** overwrite the start '}' ! **/
+    for(j_u8 = 0; j_u8 < strlen(from); j_u8++) {    /** overwrite the end '{' ! **/
+        from[j_u8] = from[j_u8 + 1];
+    }
+    
+    while((p[i_u8]  = strtok(pChar, ":,")) != NULL) {    /** split the string ... **/
+        i_u8++;
+        pChar = NULL;
+    }
+ 
+    for(j_u8 = 0; ((j_u8 < i_u8/2) && (j_u8 < CMAX1_COUPLE)); j_u8++) {
+        to[j_u8].KVIndex = i_u8/2 - j_u8;
+        strcpy(to[j_u8].key, p[j_u8 * 2]);
+        strcpy(to[j_u8].value, p[j_u8 * 2 + 1]);
+
+        to[j_u8].key[strlen(to[j_u8].key) - 1] = '\0';           /** overwrite the start '"' ? **/
+        for(k_u8 = 0; k_u8 < strlen(to[j_u8].key); k_u8++)                 /** overwrite the end '"' ? **/
+        {
+            to[j_u8].key[k_u8] = to[j_u8].key[k_u8 + 1];
+        }
+    }
+ 
+    return (1);
+}
 

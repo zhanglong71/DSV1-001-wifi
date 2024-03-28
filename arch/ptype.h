@@ -9,12 +9,16 @@
  
 /*******************************************************************************/
 typedef enum {
-    FAILED = 0, 
-    PASSED = !FAILED
+    //FAILED = 0, 
+    //PASSED = !FAILED
+    PERROR = -1,
+    POK = 0,
 } RetStatus;
-
 typedef	int	 (*pfunc_t)(unsigned *arg);
-typedef	void (*paction_t_0)(void);
+//typedef	void (*void_paction_void_t)(void);
+//typedef	void (*void_paction_int_t)(int);
+//typedef	int (*int_paction_int_t)(int);
+typedef	int (*int_paction_void_t)(void);
 
 typedef struct func_s {
     pfunc_t func;       /** function **/
@@ -37,8 +41,8 @@ typedef enum {
     CMSG_RESU,  	//resume (从挂起状态恢复。需要初始化必须的数据及外设)
     CMSG_PEND,  	//pending (挂起，外设停止工作)
     
-    CSYS_INIT,  	//初始化动作(进入选择)
-    CMSG_INIT,  	//初始化动作(进入选择)
+    CSYS_INIT,  	// 上电初始化动作(进入选择)
+    CMSG_INIT,  	// 场景初始化动作(进入选择)
     CRESP_INFO,
     
     CGETDEVINFO_REQ,
@@ -58,8 +62,12 @@ typedef enum {
     CGETCHAR_NETINFO,
     CGETCHAR_UPDATE,
     CPUT_CHAR,
+    CPUT_SYNC,
     CHEART_BEAT,
-    CWIFI_STATUS,
+    //CWIFI_STATUS,
+    CCONN_ROUTE,
+    CCONN_CLOUD,
+    CDISCONN_CLOUD,
     CSCAN_WIFI,
     
     CCONN_WIFI,
@@ -148,9 +156,9 @@ typedef struct Timer_s {
 
 typedef struct jsonTL_s {
 	u8 *jHead;
-    u16 jLen;    /** ָ������! �����0�����ǲ�ȷ�� **/
+    u16 jLen;    /** ָ??????! ??????0?????ǲ?ȷ?? **/
     u8 *jBody;
-    void* arg; /** �յ���Ӧ�������Ӧ���� �� ���� **/
+    void* arg; /** ?յ???Ӧ????????Ӧ???? ?? ???? **/
 }jsonTL_t;
 
 //typedef struct map_s {
@@ -288,6 +296,8 @@ typedef enum {
     sm_wifiInitStep1,
     sm_wifiInitStep2,
     sm_wifiInitComplete,
+    sm_wifiConnected,
+    sm_wifiDisconnected,
     sm_init,
     sm_normal,
     sm_step,
@@ -305,8 +315,19 @@ typedef enum {
     obj_none = 0,
     obj_key,
     obj_len,
-    obj_body
+    obj_body,
+    obj_SSID,
+    obj_IP,
+    obj_MAC,
+    obj_RSSI,
 } objType_t;
+
+typedef struct kv_s
+{
+    char key[10];
+    char value[16];
+    unsigned char KVIndex;
+} kv_t;
 
 /*******************************************************************************/
 typedef struct ComponentField_s{
@@ -317,6 +338,21 @@ typedef struct ComponentField_s{
 	u8 charge;
 	u8 clearWater;
 } ComponentField_t;
+
+typedef struct NetInfo_s{
+    char ssid[36];
+    char ip[20];
+    char mac[20];
+    int rssi;
+    int flag;
+    /** 
+     * flag: updated or not
+     * bit 0: ssid
+     * bit 1: ip
+     * bit 2: mac
+     * bit 3: rssi
+     **/
+} NetInfo_t;
 
 typedef struct reportStatusBody_s{
 	u8 index;

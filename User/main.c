@@ -45,6 +45,10 @@ u8 g_sm_wifiInitStatus;
  * the latest status changed and record the current status
  * the status used only once for status upload report
  **/
+NetInfo_t g_netInfo;
+/**
+ * record wifi net information
+ **/
 /*********************************************************************************/
  //SysTick初始化配置
  uint32_t SysTick_Config(uint64_t ticks){
@@ -90,6 +94,7 @@ int main(void){
     USART3_CFG();
     g_flag = 0;
     g_sm_wifiInitStatus = sm_none;
+    netInfoData_init();
     memset(&g_componentStatus, CINDEX_UNKNOW, sizeof(g_componentStatus));
     fstack_init(&g_fstack);
     func.func = f_idle;

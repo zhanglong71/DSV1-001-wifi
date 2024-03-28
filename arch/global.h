@@ -12,6 +12,8 @@ extern u16 g_tick;
 extern u16 g_flag;
 extern u8 g_sm_wifiInitStatus;
 extern ComponentField_t g_componentStatus;
+
+extern NetInfo_t g_netInfo;
 #if 0
 extern	u8	g_IT_flag;
 extern  int g_tmr_iVopBusy;

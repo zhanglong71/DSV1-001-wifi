@@ -7,6 +7,7 @@
 #include "arch.h"
 #include "f_idle.h"
 #include "main.h"
+#include "l_jsonTL.h"
 
 int f_idle(unsigned *pMsg)
 {
@@ -28,32 +29,18 @@ int f_idle(unsigned *pMsg)
         if ((g_tick % cycle) == 0) {  /** updata battery level every CYCLE sec **/
             checkAndReportChargeStatus();
         }
-        #if 0
-        if (1 || ((g_tick % 30) == 5)) {  /** updata battery level every 30sec **/
-            u8 charge_status;
-            if (checkChargeChange(&charge_status) == TRUE) {
-                reportComponentStatus(charge_status);
-            } else {
-                if (charge_status == CINDEX_UNCHARGED) {
-                    (void)reportBatteryLevel(sysvar.BAT_soc);
-                } else {
-                    reportComponentStatus(charge_status);
-                }
-            }
+        /******************************************************************************************
+         * ¹¤×÷×´Ì¬ÉÏ±¨
+         ******************************************************************************************/
+        if ((g_tick % cycle) == 1) {  /** updata every CYCLE sec **/
+            checkAndReportWorkMode();
         }
-        #endif
-      /******************************************************************************************
-       * ¹¤×÷×´Ì¬ÉÏ±¨
-       ******************************************************************************************/
-      if ((g_tick % cycle) == 1) {  /** updata every CYCLE sec **/
-          checkAndReportWorkMode();
-      }
-      /******************************************************************************************
-       * ¹öÍ²×´Ì¬
-       ******************************************************************************************/
-      if ((g_tick % cycle) == 2) {  /** updata every CYCLE sec **/
-          checkAndReportRollerStatus();
-      }
+        /******************************************************************************************
+         * ¹öÍ²×´Ì¬
+         ******************************************************************************************/
+        if ((g_tick % cycle) == 2) {  /** updata every CYCLE sec **/
+            checkAndReportRollerStatus();
+        }
       /******************************************************************************************
        * Ë®±Ã×´Ì¬
        ******************************************************************************************/
@@ -77,38 +64,7 @@ int f_idle(unsigned *pMsg)
           checkAndReportConnectionStatus();
       }
       //???????????????????????????????????????
-      #if 0
-      int len = 0;
-      //jsonTL_t* p = getReportCmdbyMode(g_tick & 0x1f); //????????????
-      jsonTL_t* p = getGetCharCmdbyMode(g_tick & 0x1f); //????????????
-      if (p != NULL) {
-          /** head **/
-          len = strlen(p->jHead);
-          for (int i = 0; i < len; i++) {
-               u8Data.u8Val = p->jHead[i];
-               u8FIFOin_irq(&g_uart3TxQue, &u8Data);  //?????????????
-          }
-          u8Data.u8Val = ',';
-          u8FIFOin_irq(&g_uart3TxQue, &u8Data);  //?????????????
-          
-          /** length **/
-          len = strlen(p->jBody);
-          u8Data.u8Val = len;
-          u8FIFOin_irq(&g_uart3TxQue, &u8Data);  //?????????????
-          
-          u8Data.u8Val = ',';
-          u8FIFOin_irq(&g_uart3TxQue, &u8Data);  //?????????????
-      
-          /** body **/
-          for (int i = 0; i < len; i++) {
-              u8Data.u8Val = p->jBody[i];
-              u8FIFOin_irq(&g_uart3TxQue, &u8Data);  //?????????????
-          }
-      }
-      #else
-      //(void)reportScanWifi(NULL);
-      //(void)reportConnectWifi(NULL);
-      #endif
+
 	  //???????????????????????????????????????
         break;
     case CMSG_DKEY:
@@ -148,10 +104,12 @@ int f_idle(unsigned *pMsg)
         break;
         
     case CSYS_INIT:
+        /** nothing  **/
         SetTimer_irq(&g_timer[0], TIMER_1SEC, CMSG_TMR);
 		break;
         
     case CMSG_INIT:
+        g_tick = 0;
         SetTimer_irq(&g_timer[0], TIMER_1SEC, CMSG_TMR);
 		break;
     default:
@@ -163,6 +121,46 @@ int f_idle(unsigned *pMsg)
 
 int f_init(unsigned *pMsg)
 {
+}
+
+/** get wifi netinfo **/
+int f_getNetInfo(unsigned *pMsg)
+{
+    func_t func;
+    msg_t msg;
+    int_paction_void_t funcArr[] = {
+        doNothing,
+        reportgetSsid,
+        reportgetIp,
+        reportgetMac,
+        reportgetRssi,
+    };
+
+    switch(((msg_t *)pMsg)->msgType)
+    {
+    case CMSG_INIT:
+        g_tick = 0;
+        SetTimer_irq(&g_timer[0], TIMER_1SEC, CMSG_TMR);
+        // (void)memset(&g_netInfo, 0, sizeof(g_netInfo));
+        g_netInfo.flag = 0;
+		break;
+    
+    case CMSG_TMR:
+        g_tick++;
+        if (g_tick >= MTABSIZE(funcArr)) {
+            fstack_init(&g_fstack);
+            func.func = f_idle;
+            fstack_push(&g_fstack, &func);
+            msg.msgType = CMSG_INIT;
+            msgq_in_irq(&g_msgq, &msg);
+        } else {
+            (void)funcArr[g_tick]();
+        }
+        break;
+        
+    default:
+        break;
+    }
 }
 
 

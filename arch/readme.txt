@@ -30,6 +30,7 @@
 2024/3/19 11:34:55 设置状态下双击按键复位wifi模组
 2024/3/26 11:04:07 修改对getChar命令的处理：不管有没有变化都应答上报！区别reportChar的有变化才上报!
 2024/3/27 9:48:51 添加getChar/reportChar status 状态上报：离线与在线
+2024/3/28 16:44:36 修改网络信息逻辑：连上路由器后(第一次或断开后的重联)，就要查询网络信息! 响应getChar,7,netInfo/getChar,6,update
 
 /*********************************************************************************************************************/
 JSON规则：
@@ -130,6 +131,41 @@ getDevInfo,0,
     ]
 }
 
+/**
+ * 5.10 MCU ==> WIFI
+ * 查 Rssi
+ * MCU send: getRssi,0\n
+ * WIFI ACK: getRssi,3,-35\n
+ **/
+ 
+/**
+ * 5.16 MCU ==> WIFI
+ * 查 IP
+ * MCU send: getIp,0\n
+ * WIFI ACK: getIp,34,{"status": 1,"ip":"192.168.43.86"}\n
+ **/
+ 
+/**
+ * 5.17 MCU ==> WIFI
+ * 查 MAC
+ * MCU send: getMac,0\n
+ * WIFI ACK: getMac,38,{"status":1,"mac":"fc:58:22:4f:32:c9"}\n
+ **/
+ 
+/**
+ * 5.18 MCU ==> WIFI
+ * 查 SSID
+ * MCU send: getSsid,0\n
+ * WIFI ACK: getSsid,24,{"status":1,"ssid":"K2"}\n
+ **/
+ 
+ /**
+ * 5.18 MCU ==> WIFI
+ * 查 getWifiStatus
+ * MCU send: getWifiStatus,0\n
+ * WIFI ACK: getSsid,24,{"status":1,"ssid":"K2"}\n
+ **/
+ 
 /*********************************************************************************************************************/
 确定状态的依据:
 为了尽量不改动原来的代码，偿试用查 sysvar/ 状态的方式的取得信息，而不是在对应状态发消息! (这样合适吗 ？或在对应的代码逻辑处加消息发送 ？)

@@ -13,4 +13,7 @@ void checkAndAckGetCharChargeStatus(void);
 void checkAndAckGetCharClearWaterStatus(void);
 void checkAndAckGetCharConnectionStatus(void);
 
+void netInfoData_init();
+
+
 #endif
