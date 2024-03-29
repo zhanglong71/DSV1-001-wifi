@@ -490,7 +490,7 @@ void checkAndAckGetCharRollerStatus(void)
  **/
 int checkPumpStatusChange(u8* status)
 {
-    u8 static pump_status_last = 0;
+    u8 static pump_status_last = CINDEX_PUMPNORMAL;
 
     if (status == NULL) {
         return FALSE;
@@ -653,7 +653,7 @@ void checkAndAckGetCharChargeStatus(void)
  **/
 int checClearWaterChange(u8* status)
 {
-    u8 static clear_status_last = 0;
+    u8 static clear_status_last = CINDEX_CLEARWATERNORMAL;
 
     if (status == NULL) {
         return FALSE;
