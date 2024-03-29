@@ -945,12 +945,14 @@ objType_t sm_receiveData(u8 *data)
                 /** get devinfo **/
                 msg.msgType = CGETDEVINFO_REQ;
                 msgq_in_irq(&g_msgq, &msg);
-                
                 return obj_none;
             } else if (MisHeartbeatCommand(s_keyIdx) == TRUE) {
                 msg.msgType = CHEART_BEAT;
                 msgq_in_irq(&g_msgq, &msg);
-                
+                return obj_none;
+            } else if (MisPutSync(s_keyIdx) == TRUE) {
+                msg.msgType = CPUT_SYNC;
+                msgq_in_irq(&g_msgq, &msg);
                 return obj_none;
             } else {
                 /** end transmit but invalid data **/
@@ -1082,10 +1084,7 @@ objType_t sm_receiveData(u8 *data)
                 } else { 
                     // return obj_RSSI;
                 }
-            } else if (MisPutSync(s_keyIdx)) {
-                msg.msgType = CPUT_SYNC;
-                msgq_in_irq(&g_msgq, &msg);
-                return obj_none;
+            } else {
             }
             
             return obj_body;
